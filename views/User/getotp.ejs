@@ -1,0 +1,89 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <link rel="stylesheet" href="/css/otp.css">
+
+    <style>
+        .timer-container {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <form action="/verifyotp" method="post" id="verifyForm">
+                <div class="form-group">
+                    <label for="otp">Enter OTP</label>
+                    <input type="text" id="otp" name="otp" placeholder="">
+                    <button type="submit" class="verify-otp">VERIFY OTP</button>
+                    <button type="button" id="resendButton" class="resend-otp" disabled>RESEND OTP</button>
+                </div>
+                <div class="timer-container">
+                    <p>Resend OTP in <span id="timer">15</span> seconds</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resendButton = document.getElementById('resendButton');
+            const timerElement = document.getElementById('timer');
+
+            let timerValue = 15;
+            let timerInterval;
+
+            const startTimer = () => {
+                resendButton.disabled = true;
+                timerElement.textContent = timerValue;
+
+                timerInterval = setInterval(() => {
+                    timerValue--;
+                    timerElement.textContent = timerValue;
+
+                    if (timerValue <= 0) {
+                        clearInterval(timerInterval);
+                        resendButton.disabled = false;
+                        timerElement.textContent = '';
+                    }
+                }, 1000);
+            };
+
+            startTimer(); // Start the timer when the page loads
+
+            resendButton.addEventListener('click', () => {
+                fetch('/resendotp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({}) // You can add any additional data if needed
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('OTP resent successfully!');
+                        timerValue = 15; // Reset the timer
+                        startTimer(); // Restart the timer
+                    } else {
+                        alert('Failed to resend OTP. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resending OTP:', error);
+                    alert('Error resending OTP. Please try again.');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="/css/login.css">
+    <style>
+        /* Add styles for the modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <h2>Login</h2>
+            <p>Get access to your Orders, Wishlist and Recommendations</p>
+            <img src="path/to/your/image.png" alt="Organic Vegetables" class="login-image">
+        </div>
+        <div class="right-section">
+            <form action="/login" method="post">
+                <div class="form-group">
+                    <br>
+                    <input type="email" name="email" placeholder="Enter email" required>
+                </div>
+                <br>
+                <div class="form-group">
+                    <input type="password" name="password" placeholder="Enter password" required>
+                </div>
+                <br>
+                <div class="form-group">
+                    <button type="submit">Login</button>
+                </div>
+                
+                <div class="form-group">
+                    <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot Password?</a>
+                </div>
+
+                <p class="or">or</p>
+
+                <div class="sso-buttons">
+                    <button class="sso-button google" onclick="window.location.href='/login/google'">
+                        <img src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" alt="Google"> LogIn with Google
+                    </button>
+                    <!-- <button class="sso-button facebook">
+                        <img src="path/to/facebook-icon.png" alt="Facebook"> Sign up with Facebook
+                    </button> -->
+                </div>
+            </form>
+            <p class="new-account">New to Eatable? <a href="/register">Create an account</a></p>
+            
+            
+        </div>
+    </div>
+
+    <!-- Modal for Forgot Password -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <input type="email" name="email" id="forgotEmail" placeholder="Enter your email" required>
+                </div>
+                <button type="button" id="requestOtpButton">Request OTP</button>
+            </form>
+
+            <form id="verifyOtpForm" style="display:none;">
+                <div class="form-group">
+                    <input type="text" name="otp" id="otp" placeholder="Enter OTP" required>
+                </div>
+                <button type="submit" id="verifyOtpButton" class="verify-otp" >Verify OTP</button>
+                <button type="button" id="resendButton" class="resend-otp">Resend OTP</button>
+            </form>
+
+            <form id="resetPasswordForm" style="display:none;">
+                <div class="form-group">
+                    <input type="password" name="newPassword" id="newPassword" placeholder="Enter new password" required>
+                </div>
+                <button type="button" id="resetPasswordButton">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get modal element
+        const modal = document.getElementById('forgotPasswordModal');
+        const closeModal = document.getElementById('closeModal');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const requestOtpButton = document.getElementById('requestOtpButton');
+        const verifyOtpButton = document.getElementById('verifyOtpButton');
+        const resetPasswordButton = document.getElementById('resetPasswordButton');
+
+        // Show modal when clicking "Forgot Password?"
+        forgotPasswordLink.onclick = function() {
+            modal.style.display = 'block';
+        }
+
+        // Close modal when clicking the "x"
+        closeModal.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside of the modal
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Request OTP
+        requestOtpButton.onclick = function() {
+            const email = document.getElementById('forgotEmail').value;
+            fetch('/request-password-reset-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('OTP sent to your email.');
+                    document.getElementById('forgotPasswordForm').style.display = 'none';
+                    document.getElementById('verifyOtpForm').style.display = 'block';
+                } else {
+                    alert('Error sending OTP.');
+                }
+            });
+        }
+
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const resendButton = document.getElementById('resendButton');
+            resendButton.addEventListener('click', () => {
+                fetch('/request-password-resend-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({}) // You can add any additional data if needed
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('OTP resent successfully!');
+                    } else {
+                        alert('Failed to resend OTP. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resending OTP:', error);
+                    alert('Error resending OTP. Please try again.');
+                });
+            });
+        });
+    
+
+        // Verify OTP
+        verifyOtpButton.onclick = function() {
+            const otp = document.getElementById('otp').value;
+            fetch('/verify-password-reset-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ otp })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('OTP verified.');
+                    document.getElementById('verifyOtpForm').style.display = 'none';
+                    document.getElementById('resetPasswordForm').style.display = 'block';
+                } else {
+                    alert('Invalid OTP.');
+                }
+            });
+        }
+
+        // Reset Password
+        resetPasswordButton.onclick = function() {
+            const newPassword = document.getElementById('newPassword').value;
+            fetch('/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: newPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Password reset successful. You can now log in with your new password.');
+                    modal.style.display = 'none';
+                } else {
+                    alert('Error resetting password.');
+                }
+            });
+        }
+    </script>
+    
+</body>
+</html>
+
