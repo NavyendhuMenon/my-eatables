@@ -4,6 +4,14 @@ const adminRoute = express();
 import *as adminController from "../controllers/adminController.js"
 import *as productController from "../controllers/productController.js"
 import *as auth from "../middleware/auth.js"
+import *as adminOrder from "../controllers/adminOrder.js"
+import *as adminCategory from "../controllers/adminCategory.js"
+import *as userController from "../controllers/userController.js"
+
+import *as promoController from "../controllers/promotionalOffers.js"
+
+
+
 import cookieParser from "cookie-parser";
 
 import cors from "cors"
@@ -24,25 +32,30 @@ adminRoute.use(express.static('uploads'))
 import { isAdmin } from "../middleware/roleChecker.js";
 
 
+adminRoute.get ('/forgotPass',userController.userLogin)
+
+
 adminRoute.get('/dashboard',auth.isLogin,isAdmin,adminController.loadDash)
+adminRoute.get('/sales-data-stats',auth.isLogin,isAdmin,adminController.getStatsData)
+adminRoute.get('/salesReport', auth.isLogin,isAdmin,adminController.getSalesReport);
 
 
 adminRoute.get('/customer',auth.isLogin ,isAdmin,adminController.loadCustomerDash)
-adminRoute.get('/blockCustomer',auth.isLogin ,isAdmin, adminController.blockUser)
-adminRoute.get('/unBlockCustomer',auth.isLogin ,isAdmin,adminController.unblockUser)
+adminRoute.post('/blockCustomer',auth.isLogin ,isAdmin, adminController.blockUser)
+adminRoute.post('/unBlockCustomer',auth.isLogin ,isAdmin,adminController.unblockUser)
 
 
-adminRoute.get ('/category',auth.isLogin ,isAdmin, productController.loadCategory)
-
-adminRoute.get ('/editCategories',auth.isLogin ,isAdmin,productController.loadEditCategory)
-adminRoute.get('/unBlockCategory',auth.isLogin ,isAdmin,productController.unblockCategory)
-adminRoute.get('/blockCategory',auth.isLogin ,isAdmin,productController.blockCategory)
-adminRoute.post('/addCategory',auth.isLogin ,isAdmin,productController.addCatagories)
-adminRoute.post('/updateCategory',auth.isLogin ,isAdmin,productController.EditCategory)
+adminRoute.get ('/category',auth.isLogin ,isAdmin, adminCategory.loadCategory)
+adminRoute.get ('/editCategories',auth.isLogin ,isAdmin,adminCategory.loadEditCategory)
+adminRoute.get('/unBlockCategory',auth.isLogin ,isAdmin,adminCategory.unblockCategory)
+adminRoute.get('/blockCategory',auth.isLogin ,isAdmin,adminCategory.blockCategory)
+adminRoute.post('/addCategory',auth.isLogin ,isAdmin,adminCategory.addCatagories)
+adminRoute.post('/updateCategory',auth.isLogin ,isAdmin,adminCategory.EditCategory)
 
 
 adminRoute.get ('/products',auth.isLogin ,isAdmin,productController.loadProduct)
-adminRoute.post('/products',auth.isLogin ,isAdmin,productController.upload.array('image',5),productController.cropImages, productController.addNewProduct)
+// adminRoute.post('/products',auth.isLogin ,isAdmin,productController.upload.array('image',5),productController.cropImages, productController.addNewProduct)
+adminRoute.post('/products', auth.isLogin,isAdmin, productController.addProduct)
 adminRoute.get ('/productList',auth.isLogin ,isAdmin,productController.loadProductList)
 adminRoute.get('/unBlockProduct',auth.isLogin ,isAdmin,productController.unblockProduct)
 adminRoute.get('/blockProduct',auth.isLogin ,isAdmin,productController.blockProduct)
@@ -51,6 +64,20 @@ adminRoute.post('/editProduct', auth.isLogin, isAdmin, productController.upload.
 adminRoute.delete('/deleteImage',auth.isLogin, isAdmin,productController. deleteProductImage);
 
 
+adminRoute.get ('/orderlist',auth.isLogin, isAdmin,adminOrder.loadOrderPage)
+adminRoute.post('/orders/change-status/:orderId',auth.isLogin, isAdmin,adminOrder.changeOrderStatus);
+
+
+
+adminRoute.get ('/offer',auth.isLogin, isAdmin,promoController.loadOffer )
+adminRoute.post('/addOffer',auth.isLogin, isAdmin,promoController.addOffer)
+adminRoute.patch('/offer/:couponId/status', auth.isLogin, isAdmin, promoController.updateOfferStatus)
+
+
+
+adminRoute.get('/coupon', auth.isLogin, isAdmin, promoController.loadCoupon)
+adminRoute.post('/createCoupon', auth.isLogin, isAdmin, promoController.createCoupon)
+adminRoute.patch('/coupon/:couponId/status', auth.isLogin, isAdmin, promoController.updateCouponStatus)
 
 
 

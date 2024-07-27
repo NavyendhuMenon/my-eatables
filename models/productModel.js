@@ -1,5 +1,5 @@
 import mongoose, { model } from "mongoose";
-// import { category } from "./categoryModel";
+
 
 const reviewSchema = new mongoose.Schema({
   name: {
@@ -74,7 +74,17 @@ const productSchema = new mongoose.Schema({
     default: true,
   },
   reviews: [reviewSchema],
-});
+  offers: [{ 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Offer'
+  }]
+},
+  { timestamps: true }
+);
+
+
+
+
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

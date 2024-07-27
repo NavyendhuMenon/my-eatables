@@ -8,6 +8,14 @@ const addressSchema = new Schema({
         ref: 'User',
         required: true
     },
+    name: {
+        type: String,
+        required: true
+    },
+    mobile: {
+        type: Number,
+        required: true
+    },
     addressLine1: {
         type: String,
         required: true
@@ -24,7 +32,13 @@ const addressSchema = new Schema({
     postalCode: {
         type: String,
         required: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
+
+
 }, {
     timestamps: true
 });

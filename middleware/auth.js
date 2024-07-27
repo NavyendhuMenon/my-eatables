@@ -42,21 +42,7 @@ export const isLogin = async (req, res, next) => {
     console.error(error);
   }
 };
-//   if (token) {
-//     res.redirect('/login')
-//     return res.status(403).send('Token is required');
 
-//   }
-
-//   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-//     if (err) {
-//       return res.status(401).send('Unauthorized: Invalid token');
-
-//     }
-//     req.user = decoded; // Attach decoded token data to req.user
-//     next();
-//   });
-// };
 
 export const isLogout = async (req, res, next) => {
   try {

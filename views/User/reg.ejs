@@ -1,87 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup Form</title>
-    <link rel="stylesheet" href="/css/reg.css">
-</head>
-<body>
-    <div class="container">
-        <div class="left-section">
-            <h2>Looks like you're new here!</h2>
-            <p>Sign up with your mobile number to get started</p>
-            <img src="/img/logo.png" alt="Organic Vegetables" class="signup-image">
-        </div>
-        <div class="right-section">
-            <form action="/register" method ="post" onsubmit="return validateForm()">
-                <div class="form-group">
-                    <input type="text" name="firstName" placeholder="Enter first name" required pattern="[A-Za-z ]+" title="Only letters and spaces are allowed">
-                </div>
-                <div class="form-group">
-                    <input type="text" name="lastName" placeholder="Enter last name" required pattern="[A-Za-z ]+" title="Only letters and spaces are allowed">
-                </div>
-                <div class="form-group">
-                    <input type="email" name="email" placeholder="Enter email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Invalid email address">
-                </div>
-                <div class="form-group">
-                    <input type="text" name="mobile" placeholder="Enter mobile number" required  pattern="[0-9]{10}" title="Mobile number must be 10 digits">
-                </div>
-                <div class="form-group">
-                    <input type="password" name="password" placeholder="Enter password" required minlength="8" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$" title="Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character">
-                </div>
-                <div class="form-group">
-                    <input type="password" name="password_conf" placeholder="Re-Enter password" required required minlength="8>
-                </div>
-                <div class="form-group">
-                    <p>By continuing, you agree to Fruitable's Terms of Use and Privacy Policy.</p>
-                    <button type="submit">Continue</button>
-                </div>
-
-
-                <script>
-                    function validateForm() {
-                        const firstName = document.getElementById('firstName').value;
-                        const lastName = document.getElementById('lastName').value;
-                        const email = document.getElementById('email').value;
-                        const mobile = document.getElementById('mobile').value;
-                        const password = document.getElementById('password').value;
-                        const confirmPassword = document.getElementById('password_conf').value;
-
-                        if (firstName.trim() === '' || lastName.trim() === '' || email.toUpperCase() === email || mobile.length !== 10) {
-                            alert('Please enter valid data for all fields.');
-                            return false;
-                        }
-
-                        if (!password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$/)) {
-                            alert('Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character');
-                            return false;
-                        }
-
-                        if (password !== confirmPassword) {
-                            alert("Passwords do not match");
-                            return false;
-                        }
-
-                        return true; 
-                    }
-                </script>
-               
-
-            </form>
-            <p class="or">or</p>
-            <div class="sso-buttons">
-                <button class="sso-button google">
-                    <img src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" alt="Google"> Sign up with Google
-                </button>
-               
-            </div>
-            <p class="existing-user">Existing User? <a href="/login">Login in</a></p>
-        </div>
-    </div>
-</body>
-</html> -->
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -90,8 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signup Form</title>
     <link rel="stylesheet" href="/css/reg.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
+    <style>
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding-right: 40px; /* Adjust based on the size of the icon */
+        }
+
+        .input-group .fa-eye, .input-group .fa-eye-slash {
+            position: absolute;
+            right: 10px; /* Adjust to position the icon properly */
+            cursor: pointer;
+        }
+
+        #message {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+    </style>
     <div class="container">
         <div class="left-section">
             <h2>Looks like you're new here!</h2>
@@ -112,53 +52,83 @@
                 <div class="form-group">
                     <input type="text" id="mobile" name="mobile" placeholder="Enter mobile number" required pattern="[0-9]{10}" title="Mobile number must be 10 digits">
                 </div>
-                <div class="form-group">
-                    <input type="password" id="password" name="password" placeholder="Enter password" minlength="8" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$" title="Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character">
+                <div class="form-group password-container">
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" placeholder="Enter password" minlength="8" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$" title="Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character">
+                        <i class="fa fa-eye" id="eye" onclick="togglePassword('password', 'eye')"></i>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <input type="password" id="password_conf" name="password_conf" placeholder="Re-Enter password" minlength="8" title="Passwords must match">
+                <div class="form-group password-container">
+                    <div class="input-group">
+                        <input type="password" id="password_conf" name="password_conf" placeholder="Re-Enter password" minlength="8" required title="Passwords must match">
+                        <i class="fa fa-eye" id="eye_conf" onclick="togglePassword('password_conf', 'eye_conf')"></i>
+                    </div>
                 </div>
                 <div class="form-group">
                     <p>By continuing, you agree to Fruitable's Terms of Use and Privacy Policy.</p>
                     <button type="submit">Continue</button>
                 </div>
             </form>
-            <!-- <p class="or">or</p>
-            <div class="sso-buttons">
-                <button class="sso-button google">
-                    <img src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" alt="Google"> Sign up with Google
-                </button>
-            </div> -->
             <p class="existing-user">Existing User? <a href="/login">Login in</a></p>
         </div>
     </div>
 
     <script>
-        function validateForm() {
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
-            const mobile = document.getElementById('mobile').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('password_conf').value;
-
-            if (firstName.trim() === '' || lastName.trim() === '' || email.toUpperCase() === email || mobile.length !== 10) {
-                alert('Please enter valid data for all fields.');
-                return false;
+        function togglePassword(passwordId, eyeId) {
+            var password = document.getElementById(passwordId);
+            var eye = document.getElementById(eyeId);
+            if (password.type === "password") {
+                password.type = "text";
+                eye.className = "fa fa-eye-slash";
+            } else {
+                password.type = "password";
+                eye.className = "fa fa-eye";
             }
-
-            if (!password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$/)) {
-                alert('Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character');
-                return false;
-            }
-
-            if (password !== confirmPassword) {
-                alert("Passwords do not match");
-                return false;
-            }
-
-            return true; 
         }
+
+        function validateForm() {
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const mobile = document.getElementById('mobile').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const confirmPassword = document.getElementById('password_conf').value.trim();
+
+  // Check if first name or last name are empty
+  if (firstName === '' || lastName === '') {
+    alert('Please enter a valid first name and last name.');
+    return false;
+  }
+
+  // Check if email is in upper case
+  if (email === email.toUpperCase()) {
+    alert('Email should not be in uppercase.');
+    return false;
+  }
+
+  // Check if mobile number is 10 digits
+  if (mobile.length !== 10 || !/^[0-9]{10}$/.test(mobile)) {
+    alert('Mobile number must be 10 digits.');
+    return false;
+  }
+
+  // Check if password matches the pattern
+  if (!password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$/)) {
+    alert('Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character.');
+    return false;
+  }
+
+  // Check if passwords match
+  if (password !== confirmPassword) {
+    alert("Passwords do not match.");
+    return false;
+  }
+
+  // If all validations pass
+  return true;
+}
+
+
     </script>
 </body>
 </html>

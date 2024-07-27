@@ -22,41 +22,45 @@
                         <div class="row g-4">
                             <div class="col-xl-3">
                                 <div class="input-group w-100 mx-auto d-flex">
-                                    <input type="search" class="form-control p-3" placeholder="keywords" aria-describedby="search-icon-1">
+                                    <input id="search-input" type="search" class="form-control p-3" placeholder="keywords" aria-describedby="search-icon-1">
                                     <span id="search-icon-1" class="input-group-text p-3"><i class="fa fa-search"></i></span>
                                 </div>
                             </div>
                             <div class="col-6"></div>
                             <div class="col-xl-3">
                                 <div class="bg-light ps-3 py-3 rounded d-flex justify-content-between mb-4">
-                                    <label for="fruits">Default Sorting:</label>
-                                    <select id="fruits" name="fruitlist" class="border-0 form-select-sm bg-light me-3" form="fruitform">
-                                        <option value="volvo">Nothing</option>
-                                        <option value="saab">Popularity</option>
-                                        <option value="opel">Organic</option>
-                                        <option value="audi">Fantastic</option>
+                                    <label for="sort">Please sort by</label>
+                                    <select id="sort" name="sortlist" class="border-0 form-select-sm bg-light me-3" >
+                                        <option value="sort">Sort Here..</option>
+                                        <option value="AtoZ">A to Z</option>
+                                        <option value="ZtoA">Z to A</option>
+                                        <option value="PriceHighToLow">Price High to low</option>
+                                        <option value="PriceLowToHigh">Price Low to high</option>
                                     </select>
                                 </div>
                             </div>
+                                        
                         </div>
                         <div class="row g-4">
                             <div class="col-lg-3">
                                 <div class="row g-4">
-                                    <!-- <div class="col-lg-12">
+                                    <div class="col-lg-12">
                                         <div class="mb-3">
                                             <h4>Categories</h4>
-                                            <ul class="list-unstyled fruite <% if (uniqueCategories && uniqueCategories.length > 0) { %> 
-                                                <% uniqueCategories.forEach(category => { %> 
-                                                <li>
+                                            <ul class="list-unstyled fruite-categorie">
+                                                <% category.forEach(category => { %>
+                                                  <li>
                                                     <div class="d-flex justify-content-between fruite-name">
-                                                        <a href="#"><i class="fas fa-apple-alt me-2"></i><%= category.categoryName %></a>
+                                                        <a href="#" class="category-filter" data-category-id="<%= category._id %>">
+                                                            <i class="fas fa-apple-alt me-2"></i><%= category.name %>
+                                                        </a>
+                                                      <span>(<%= category.productCount%>)</span>
                                                     </div>
-                                                </li>
-                                                <% }); %>
-                                                <% } %>
+                                                  </li>
+                                                <% }) %>
                                             </ul>
                                         </div>
-                                    </div> -->
+                                    </div>
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <h4 class="mb-2">Price</h4>
@@ -65,12 +69,12 @@
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
-                                        <div class="mb-3">
+                                        <!-- <div class="mb-3">
                                             <h4>Additional</h4>
-                                            <!-- <div class="mb-2">
+                                            <div class="mb-2">
                                                 <input type="radio" class="me-2" id="Categories-1" name="Categories-1" value="Beverages">
                                                 <label for="Categories-1"> higlight</label>
-                                            </div> -->
+                                            </div>
                                             <div class="mb-2">
                                                 <input type="radio" class="me-2" id="Categories-2" name="Categories-1" value="Beverages">
                                                 <label for="Categories-2"> Fresh</label>
@@ -87,7 +91,7 @@
                                                 <input type="radio" class="me-2" id="Categories-5" name="Categories-1" value="Beverages">
                                                 <label for="Categories-5"> Expired</label>
                                             </div>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <div class="col-lg-12">
                                         <h4 class="mb-3">Featured products</h4>
@@ -163,12 +167,12 @@
                                 </div>
                             </div>
                             <div class="col-lg-9">
-                                <div class="row g-4 justify-content-center">
+                                <div class="row g-4 justify-content-center" id="product-list">
 
                                  <% if (locals.products) { %>
                                   <% for (let i = 0; i < products.length; i++) { %>
 
-                                    <div class="col-md-6 col-lg-6 col-xl-4">
+                                    <div class="col-md-6 col-lg-6 col-xl-4 product-item">
                                         <div class="rounded position-relative fruite-item">
                                             <div class="fruite-img">
                                                 <a href="/productDetails/<%= products[i]._id %>">
@@ -187,13 +191,10 @@
                                                     <a onclick="addToWishlist('<%= products[i]._id %>')" class="btn border border-secondary rounded-pill px-3 text-primary me-2">
                                                         <i class="fa fa-heart text-primary" style="color: #FFB524;"></i>
                                                     </a>
-                                                    <!-- <a href="/mycart" class="btn border border-secondary rounded-pill px-3 text-primary">
-                                                      <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
-                                                    </a> -->
                                                   </div>
                                                   <br>
                                                   <div class="d-flex justify-content-center">
-                                                    <a href="/mycart" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                                    <a href="" onclick="addToCart('<%= products[i]._id %>')" class="btn border border-secondary rounded-pill px-3 text-primary">
                                                       <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
                                                     </a>
                                                   </div>
@@ -203,76 +204,18 @@
                                     
                                    <% } %>
                                  <% } %>
+                             
 
-                                 <div class="col-12">
-                                    <div class="pagination d-flex justify-content-center mt-5">
-                                        <button class="rounded" id="prevPage">&laquo;</button>
-                                        <div id="paginationNumbers"></div>
-                                        <button class="rounded" id="nextPage">&raquo;</button>
-                                    </div>
                                 </div>
-                                
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', (event) => {
-                                        const productsContainer = document.getElementById('productsContainer');
-                                        const paginationNumbers = document.getElementById('paginationNumbers');
-                                        const prevPage = document.getElementById('prevPage');
-                                        const nextPage = document.getElementById('nextPage');
-                                
-                                        const products = Array.from(document.getElementsByClassName('product-item'));
-                                        const productsPerPage = 6;
-                                        let currentPage = 1;
-                                        let totalPages = Math.ceil(products.length / productsPerPage);
-                                
-                                        const updatePagination = () => {
-                                            paginationNumbers.innerHTML = '';
-                                            for (let i = 1; i <= totalPages; i++) {
-                                                const pageButton = document.createElement('button');
-                                                pageButton.textContent = i;
-                                                pageButton.classList.add('rounded');
-                                                if (i === currentPage) {
-                                                    pageButton.classList.add('active');
-                                                }
-                                                pageButton.addEventListener('click', () => {
-                                                    currentPage = i;
-                                                    displayProducts();
-                                                });
-                                                paginationNumbers.appendChild(pageButton);
-                                            }
-                                            prevPage.disabled = currentPage === 1;
-                                            nextPage.disabled = currentPage === totalPages;
-                                        };
-                                
-                                        const displayProducts = () => {
-                                            productsContainer.innerHTML = '';
-                                            const start = (currentPage - 1) * productsPerPage;
-                                            const end = start + productsPerPage;
-                                            const pageProducts = products.slice(start, end);
-                                            pageProducts.forEach((product, index) => {
-                                                if (index < productsPerPage) { // Display only the first 6 products on the first page
-                                                    productsContainer.appendChild(product);
-                                                }
-                                            });
-                                            updatePagination();
-                                        };
-                                
-                                        prevPage.addEventListener('click', () => {
-                                            if (currentPage > 1) {
-                                                currentPage--;
-                                                displayProducts();
-                                            }
-                                        });
-                                
-                                        nextPage.addEventListener('click', () => {
-                                            if (currentPage < totalPages) {
-                                                currentPage++;
-                                                displayProducts();
-                                            }
-                                        });
-                                
-                                        displayProducts();
-                                    });
-                                </script
+                                         <!-- Pagination controls -->
+                               <div class="row">
+                                  <div class="col">
+                                   <nav aria-label="Product Pagination" class="pagination-container">
+                                      <ul id="product-pagination" class="pagination">
+                                       <!-- Pagination links will be added dynamically -->
+                                      </ul>
+                                    </nav>
+                                  </div>
                                 </div>
                             </div>
                         </div>
@@ -280,7 +223,377 @@
                 </div>
             </div>
         </div>
+
+        <style>
+            .pagination-container {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+          
+            .pagination {
+              display: flex;
+              justify-content: center;
+              list-style: none;
+              padding: 0;
+            }
+          
+            .pagination .page-item {
+              margin: 0 5px;
+            }
+          
+            .pagination .page-link {
+             color: #81c408;
+             text-decoration: none;
+            }
+
+           .pagination .page-item.active .page-link {
+            background-color: #ffb524 ;
+            color: white;
+            }
+          </style>
         <!-- Fruits Shop End-->
+
+
+        <!-----------------Script for pagination------------------------->
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+    var itemsPerPage = 9; // Number of items per page
+
+    // Function to display items for a given page number
+    function showPage(pageNum) {
+      $('.product-item').hide(); // Hide all product items
+      var startIndex = (pageNum - 1) * itemsPerPage;
+      var endIndex = startIndex + itemsPerPage - 1;
+      $('.product-item').slice(startIndex, endIndex + 1).show(); // Show items for the current page
+
+      // Update active state in pagination
+      $('#product-pagination').find('li.page-item').removeClass('active');
+      $('#product-pagination').find('li.page-item[data-page="' + pageNum + '"]').addClass('active');
+    }
+
+    // Generate pagination links based on number of items
+    function generatePagination() {
+      var numPages = Math.ceil($('.product-item').length / itemsPerPage);
+      var paginationHTML = '';
+      for (var i = 1; i <= numPages; i++) {
+        paginationHTML += '<li class="page-item" data-page="' + i + '"><a class="page-link" href="#">' + i + '</a></li>';
+      }
+      $('#product-pagination').html(paginationHTML);
+      $('#product-pagination').find('li.page-item:first').addClass('active'); // Set first page as active initially
+    }
+
+    // Initial setup
+    showPage(1); // Show first page of items
+    generatePagination(); // Generate pagination links
+
+    // Pagination click handler
+    $('#product-pagination').on('click', 'li.page-item', function(e) {
+      e.preventDefault(); // Prevent default anchor behavior
+      var pageNum = $(this).data('page');
+      showPage(pageNum); // Show the selected page
+    });
+  });
+</script>
+
+
+
+
+        <script>
+                        
+            function addToCart(productId) {
+              const quantity = 1; // Set default` quantity or get it dynamically if needed
+              fetch(`/mycart`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ productId, quantity })
+              })
+              .then(response => response.json())
+              .then(data => 
+              alert(data.message))
+              
+              .catch(error => console.error('Error:', error));
+            }
+          </script>
+
+         <!-- <div class="col-12">
+            <div id="pagination" class="text-center mt-4">
+                <button id="prevPage" class="btn btn-primary me-2">&lt; Prev</button>
+                <span id="currentPage">1</span>
+                <button id="nextPage" class="btn btn-primary ms-2">Next &gt;</button>
+            </div>    
+        </div> -->
+
+        <script>
+        document.getElementById('sort').addEventListener('change', async function(event) {
+            const sortValue = event.target.value;
+            try {
+                const response = await fetch(`/shop/sort?sort=${sortValue}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+    
+                if (response.ok) {
+                    const data = await response.json();
+                    updateProducts(data.products);
+                } else {
+                    console.error('Failed to fetch sorted products');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    
+        function updateProducts(products) {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';
+    
+            products.forEach(product => {
+                const productHtml = `
+                    <div class="col-md-6 col-lg-6 col-xl-4">
+                        <div class="rounded position-relative fruite-item">
+                            <div class="fruite-img">
+                                <a href="/productDetails/${product._id}">
+                                    <img src="/uploads/${product.image[0]}" class="img-fluid w-100 rounded-top" alt="product-img">
+                                </a>
+                            </div>
+                            <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">
+                                ${product.category.name}
+                            </div>
+                            <div class="p-4 border border-secondary border-top-0 rounded-bottom">
+                                <a href="/productDetails/${product._id}">
+                                    <h4>${product.title}</h4>
+                                </a>
+                                <p>${product.description}</p>
+                                <div class="d-flex justify-content-between flex-lg-wrap">
+                                    <p class="text-dark fs-5 fw-bold mb-0"> ₹ ${product.regularPrice} /kg</p>
+                                    <a onclick="addToWishlist('${product._id}')" class="btn border border-secondary rounded-pill px-3 text-primary me-2">
+                                        <i class="fa fa-heart text-primary" style="color: #FFB524;"></i>
+                                    </a>
+                                </div>
+                                <br>
+                                <div class="d-flex justify-content-center">
+                                    <a href="/mycart" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                        <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                productList.insertAdjacentHTML('beforeend', productHtml);
+            });
+        }
+
+    
+
+document.addEventListener('DOMContentLoaded', function() {
+document.getElementById('search-input').addEventListener('keyup', async function(event) {
+const query = event.target.value.trim();
+if (query.length > 0) {
+try {
+const response = await fetch(`/shop/search?productName=${query}`, {
+headers: { 'Accept': 'application/json' }
+});
+
+if (response.ok) {
+const data = await response.json();
+updateProducts(data.products);
+} else {
+console.error('Failed to fetch search results');
+}
+} catch (error) {
+console.error('Error:', error);
+}
+} else {
+// Optionally, you can clear the results or fetch all products when search input is cleared
+updateProducts([]);  // Clear product list
+}
+});
+
+function updateProducts(products) {
+const productList = document.getElementById('product-list');
+if (!productList) {
+console.error('Product list element not found');
+return;
+}
+productList.innerHTML = '';
+
+products.forEach(product => {
+const productHtml = `
+<div class="col-md-6 col-lg-6 col-xl-4">
+<div class="rounded position-relative fruite-item">
+    <div class="fruite-img">
+        <a href="/productDetails/${product._id}">
+            <img src="/uploads/${product.image[0]}" class="img-fluid w-100 rounded-top" alt="product-img">
+        </a>
+    </div>
+    <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">
+        ${product.category.name}
+    </div>
+    <div class="p-4 border border-secondary border-top-0 rounded-bottom">
+        <a href="/productDetails/${product._id}">
+            <h4>${product.title}</h4>
+        </a>
+        <p>${product.description}</p>
+        <div class="d-flex justify-content-between flex-lg-wrap">
+            <p class="text-dark fs-5 fw-bold mb-0"> ₹ ${product.regularPrice} /kg</p>
+            <a onclick="addToWishlist('${product._id}')" class="btn border border-secondary rounded-pill px-3 text-primary me-2">
+                <i class="fa fa-heart text-primary" style="color: #FFB524;"></i>
+            </a>
+        </div>
+        <br>
+        <div class="d-flex justify-content-center">
+            <a href="/mycart" class="btn border border-secondary rounded-pill px-3 text-primary">
+                <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
+            </a>
+        </div>
+    </div>
+</div>
+</div>
+`;
+productList.insertAdjacentHTML('beforeend', productHtml);
+});
+}
+});
+</script>
+
+
+
+
+<!------------------------ Filter Price --------------------------------->
+
+
+<script>
+    document.getElementById('rangeInput').addEventListener('input', async function(event) {
+    const priceValue = event.target.value;
+    try {
+        const response = await fetch(`/shop/filter?price=${priceValue}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            updateProducts(data.products);
+        } else {
+            console.error('Failed to fetch filtered products');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+});
+
+function updateProducts(products) {
+    const productList = document.getElementById('product-list');
+    productList.innerHTML = '';
+
+    products.forEach(product => {
+        const productHtml = `
+            <div class="col-md-6 col-lg-6 col-xl-4">
+                <div class="rounded position-relative fruite-item">
+                    <div class="fruite-img">
+                        <a href="/productDetails/${product._id}">
+                            <img src="/uploads/${product.image[0]}" class="img-fluid w-100 rounded-top" alt="product-img">
+                        </a>
+                    </div>
+                    <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">
+                        ${product.category.name}
+                    </div>
+                    <div class="p-4 border border-secondary border-top-0 rounded-bottom">
+                        <a href="/productDetails/${product._id}">
+                            <h4>${product.title}</h4>
+                        </a>
+                        <p>${product.description}</p>
+                        <div class="d-flex justify-content-between flex-lg-wrap">
+                            <p class="text-dark fs-5 fw-bold mb-0">₹ ${product.regularPrice.toFixed(2)} /kg</p>
+                            <a onclick="addToWishlist('${product._id}')" class="btn border border-secondary rounded-pill px-3 text-primary me-2">
+                                <i class="fa fa-heart text-primary" style="color: #FFB524;"></i>
+                            </a>
+                        </div>
+                        <br>
+                        <div class="d-flex justify-content-center">
+                            <a href="/mycart" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        productList.insertAdjacentHTML('beforeend', productHtml);
+    });
+}
+
+
+//category search
+
+
+document.querySelectorAll('.category-filter').forEach(item => {
+    item.addEventListener('click', async function(event) {
+        event.preventDefault();
+        const categoryId = event.target.dataset.categoryId;
+        try {
+            const response = await fetch(`/shop/filterByCategory?category=${categoryId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                updateProducts(data.products);
+            } else {
+                console.error('Failed to fetch filtered products');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+});
+
+function updateProducts(products) {
+    const productList = document.getElementById('product-list');
+    productList.innerHTML = '';
+
+    products.forEach(product => {
+        const productHtml = `
+            <div class="col-md-6 col-lg-6 col-xl-4">
+                <div class="rounded position-relative fruite-item">
+                    <div class="fruite-img">
+                        <a href="/productDetails/${product._id}">
+                            <img src="/uploads/${product.image[0]}" class="img-fluid w-100 rounded-top" alt="product-img">
+                        </a>
+                    </div>
+                    <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">
+                        ${product.category.name}
+                    </div>
+                    <div class="p-4 border border-secondary border-top-0 rounded-bottom">
+                        <a href="/productDetails/${product._id}">
+                            <h4>${product.title}</h4>
+                        </a>
+                        <p>${product.description}</p>
+                        <div class="d-flex justify-content-between flex-lg-wrap">
+                            <p class="text-dark fs-5 fw-bold mb-0">₹ ${product.regularPrice.toFixed(2)} /kg</p>
+                            <a onclick="addToWishlist('${product._id}')" class="btn border border-secondary rounded-pill px-3 text-primary me-2">
+                                <i class="fa fa-heart text-primary" style="color: #FFB524;"></i>
+                            </a>
+                        </div>
+                        <br>
+                        <div class="d-flex justify-content-center">
+                            <a href="/mycart" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        productList.insertAdjacentHTML('beforeend', productHtml);
+    });
+}
+
+</script>
 
 
 

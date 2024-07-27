@@ -1,140 +1,16 @@
 import Product from "../models/productModel.js";
 import { category } from "../models/categoryModel.js";
 import multer from "multer";
-import sharp from "sharp";
+
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid"; // uuid for unique file names
 
-//=========================================//Category Management==========================================
-
-//loadCategory
-export const loadCategory = async (req, res) => {
-  try {
-    const categoryDetail = await category.find();
-    console.log("categorydetail:", categoryDetail);
-
-    res.render("category", { categoryDetail });
-  } catch (error) {
-    console.error(error);
-  }
-};
+import sharp from "sharp";
+import { IncomingForm } from 'formidable';
+import path from "path";
 
 
-//loadEditCategory
 
-export const loadEditCategory = async (req, res) => {
-  try {
-    const catId = req.query.id;
-    const categoryDetail = await category.findById({ _id: catId });
-    res.render("editCategory", { categoryDetail });
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-
-//edit Categories
-
-export const EditCategory = async (req, res) => {
-  console.log("Edit category endpoint hit");
-
-  try {
-    const catId = req.query.id;
-    console.log("Category ID:", catId);
-
-    // Updatin with new data 
-    const { categoryDetailName, categoryDetailDescription } = req.body;
-    console.log("new name:", categoryDetailName);
-    console.log("new des:", categoryDetailDescription);
-    const updatedCategory = await category.findByIdAndUpdate(
-      catId,
-      { name: categoryDetailName, description: categoryDetailDescription },
-      { new: true } // returns updated doc
-    );
-
-    console.log("updated Categoryyyyyy:::", updatedCategory);
-
-    if (updatedCategory) {
-      console.log("inside updateCat condition");
-      res.redirect("/admin/category");
-
-    } else {
-      res.redirect("/admin/dashboard");
-    }
-  } catch (error) {
-    console.log("Error:", error);
-    res.status(500).send("Internal Server Error");
-  }
-};
-
-
-//block categeory
-export const blockCategory = async (req, res) => {
-  try {
-    const catId = req.query.id;
-    console.log("block", catId);
-    const catblock = await category.findByIdAndUpdate(catId, {
-      isActive: false,
-    });
-
-    console.log("blocked cat", catblock);
-    await Product.updateMany({ category: catId }, { isActive: false });
-    // await catData.save()
-    res.redirect("/admin/category");
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-//unblock category
-
-export const unblockCategory = async (req, res) => {
-  try {
-    console.log("Im in controler");
-    const catId = req.query.id;
-
-    const catUnblock = await category.findByIdAndUpdate(catId, {
-      isActive: true,
-    });
-    await Product.updateMany({ category: catId }, { isActive: true });
-    console.log("Im safe");
-    // await catData.save()
-    res.redirect("/admin/category");
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-//addCategories
-
-export const addCatagories = async (req, res) => {
-  try {
-    console.log("Iam in addCategories");
-    const { categoryName, categoryDescription } = req.body;
-    console.log("body", req.body);
-
-    const categoryExists = await category.findOne({ name: categoryName });
-    const exists = !!categoryExists;
-
-    if (exists) {
-      console.log("hwello", categoryExists);
-      res.status(400).json({ error: "Category already exists" });
-      return;
-    }
-
-    let Category = new category({
-      name: categoryName,
-      description: categoryDescription,
-    });
-
-    const newCategory = await Category.save();
-    console.log(newCategory);
-
-    res.status(201).json(newCategory);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
 
 // ===============================Multer Function=================================================================
 
@@ -200,7 +76,7 @@ export const cropImages = async (req, res, next) => {
 export const loadProductList = async (req, res) => {
   try {
     console.log("productlist");
-    const productList = await Product.find({});
+    const productList =  await Product.find({}).sort({ createdAt: -1 }).populate("category");
 
     console.log("inside productlist", productList);
 
@@ -214,13 +90,12 @@ export const loadProductList = async (req, res) => {
 
 export const blockProduct = async (req, res) => {
   try {
-    const ProductId = req.query.id
-    console.log("block", ProductId)
-    await Product.findByIdAndUpdate(ProductId, { isActive: false });
-    console.log("producTblock", Product);
-    res.redirect("/admin/productlist");
+    const productId = req.query.id; 
+    await Product.findByIdAndUpdate(productId, { isActive: false }); 
+    res.json({ success: true }); // Respond with success JSON
   } catch (error) {
     console.log(error.message);
+    res.status(500).json({ success: false, message: 'Failed to block product' }); // Handle error
   }
 };
 
@@ -228,14 +103,12 @@ export const blockProduct = async (req, res) => {
 
 export const unblockProduct = async (req, res) => {
   try {
-    console.log("Im in controler")
-    const ProductId = req.query.id
-    console.log(ProductId, "MY ID ")
-    await Product.findByIdAndUpdate(ProductId, { isActive: true });
-    console.log("Im product unblock", Product);
-    res.redirect("/admin/productlist");
+    const productId = req.query.id; 
+    await Product.findByIdAndUpdate(productId, { isActive: true }); 
+    res.json({ success: true }); 
   } catch (error) {
     console.log(error.message);
+    res.status(500).json({ success: false, message: 'Failed to unblock product' }); // Handle error
   }
 };
 
@@ -386,55 +259,130 @@ export const loadProduct = async (req, res) => {
 };
 
 // posting addNewProduct
-export const addNewProduct = async (req, res) => {
+// export const addNewProduct = async (req, res) => {
+//   try {
+//     let arrImages = [];
+//     for (let i = 0; i < req.files.length; i++) {
+//       arrImages[i] = req.files[i].filename;
+//       console.log("filename of the cropped image is ", req.files[i].filename);
+//     }
+//     console.log(arrImages, "images");
+
+//     console.log("Iam in add new product");
+
+//     const {
+//       pname,
+//       pdescription,
+//       regularPrice,
+//       salesPrice,
+//       tags,
+//       isActive,
+//       quantity,
+//       catStatus,
+//       pcategory,
+//     } = req.body;
+
+//     const product = new Product({
+//       title: pname,
+//       description: pdescription,
+//       regularPrice: regularPrice,
+//       salesPrice: salesPrice,
+//       date: new Date(),
+//       image: arrImages,
+//       tags: tags,
+//       category: pcategory,
+//       isActive: isActive,
+//       quantity: quantity,
+//       catStatus: catStatus,
+//     });
+
+//     const productData = await product.save();
+
+//     console.log("MyProduct", productData);
+
+//     if (productData) {
+//       // res.json({success:true,message:'Product added successfully '})
+//       res.redirect("/admin/productlist");
+//     } else {
+//       res.json({ success: false });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
+//==============================================================================
+const uploadDir = "d:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads";
+
+const parseFormData = async (req) => {
+  return new Promise((resolve, reject) => {
+    const form = new IncomingForm({
+      uploadDir: uploadDir,
+      keepExtensions: true,
+      createParentPath: true,
+    });
+
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve({ fields, files });
+    });
+  });
+};
+
+const saveProduct = async (fields, files) => {
+  const { pname, pdescription, regularPrice, quantity, pcategory } = fields;
+  const imageFile = files.croppedImage;
+
+  // Debugging logs
+  console.log('Fields:', fields);
+  console.log('Files:', files);
+  console.log('Image File:', imageFile);
+
+  if (!imageFile || !imageFile.filepath) {
+    throw new Error('No image uploaded or invalid file path');
+  }
+
+  const imagePath = imageFile.filepath;
+  console.log('Image Path:', imagePath);
+
+  const newFilename = `cropped-${Date.now()}-${path.basename(imagePath)}`;
+  const newFilePath = path.join(uploadDir, newFilename);
+
   try {
-    let arrImages = [];
-    for (let i = 0; i < req.files.length; i++) {
-      arrImages[i] = req.files[i].filename;
-      console.log("filename of the cropped image is ", req.files[i].filename);
-    }
-    console.log(arrImages, "images");
-
-    console.log("Iam in add new product");
-
-    const {
-      pname,
-      pdescription,
-      regularPrice,
-      salesPrice,
-      date,
-      tags,
-      isActive,
-      quantity,
-      catStatus,
-      pcategory,
-    } = req.body;
+    // Crop the image using sharp
+    await sharp(imagePath).resize(500, 500).toFile(newFilePath);
 
     const product = new Product({
       title: pname,
       description: pdescription,
       regularPrice: regularPrice,
-      salesPrice: salesPrice,
-      date: date,
-      image: arrImages,
-      tags: tags,
-      category: pcategory,
-      isActive: isActive,
+      image: newFilename,
       quantity: quantity,
-      catStatus: catStatus,
+      category: pcategory,
+      date: new Date(),
     });
 
-    const productData = await product.save();
+    return await product.save();
+  } catch (error) {
+    console.error('Error processing image or saving product:', error);
+    throw error;
+  }
+};
 
-    console.log("MyProduct", productData);
+export const addProduct = async (req, res) => {
+  try {
+    const { fields, files } = await parseFormData(req);
+    const productData = await saveProduct(fields, files);
 
     if (productData) {
-      // res.json({success:true,message:'Product added successfully '})
-      res.redirect("/admin/productlist");
+      res.json({ success: true, message: 'Product added successfully' });
     } else {
       res.json({ success: false });
     }
   } catch (error) {
-    console.error(error);
+    console.error('Error adding product:', error);
+    res.status(500).send('Error adding product');
   }
 };

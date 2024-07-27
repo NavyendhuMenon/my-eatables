@@ -13,6 +13,10 @@ const categorySchema = mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  offers: [{ 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Offer'
+  }]
 });
 
 export const category = mongoose.model("category", categorySchema);

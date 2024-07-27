@@ -451,6 +451,8 @@
 /*** testimonial End ***/
 
 
+
+
 /*** Single Page Start ***/
 .pagination {
     display: inline-block;
@@ -494,4 +496,13 @@
     line-height: 35px;
 }
 /*** Footer End ***/
+
+
+.flyer-clone {
+    position: absolute;
+    width: 700 px; /* Adjust as needed */
+    height: 400 px; /* Adjust as needed */
+    border-radius: 50%; /* Rounded shape */
+    transition: transform 0.5s ease, opacity 0.5s ease; /* Smooth transitions */
+}
 

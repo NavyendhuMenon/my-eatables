@@ -59,6 +59,8 @@
 
             startTimer(); // Start the timer when the page loads
 
+            
+
             resendButton.addEventListener('click', () => {
                 fetch('/resendotp', {
                     method: 'POST',
@@ -73,7 +75,7 @@
                         timerValue = 15; // Reset the timer
                         startTimer(); // Restart the timer
                     } else {
-                        alert('Failed to resend OTP. Please try again.');
+                        alert(data.error);
                     }
                 })
                 .catch(error => {

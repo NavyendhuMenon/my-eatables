@@ -1,10 +1,14 @@
 import { User } from "../models/userModel.js";
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 import nodemailer from "nodemailer";
 
 import Product from "../models/productModel.js";
+import { Order } from "../models/OrdersModel.js";
+import {category} from "../models/categoryModel.js"
+import *as offerHelper from "../helper/offerPriceHelper.js"
 
 
 //===========================================================
@@ -29,9 +33,45 @@ const generateOTP = async () => {
 };
 
 //verifyemail
+// const sendVerifyEmail = async (name, email, otp) => {
+//   try {
+//     const trasnporter = nodemailer.createTransport({
+//       host: "smtp.gmail.com",
+//       port: 587,
+//       secure: false,
+//       requireTLS: true,
+//       auth: {
+//         user: process.env.MY_EMAIL,
+//         pass: process.env.MY_PASS,
+//       },
+//     });
+
+//     const mailOptions = {
+//       from: process.env.MY_EMAIL,
+//       to: email,
+//       subject: "Verification email to Eatable",
+//       text: `Hi ${name},Welome! Your OTP is ${otp}`,
+//     };
+
+//     //send email
+//     trasnporter.sendMail(mailOptions, (error, info) => {
+//       if (error) {
+//         console.log(error.message);
+//       } else {
+//         console.log(`Email sent  ${info.response}`);
+//       }
+//     });
+
+//     return true;
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// };
+
+
 const sendVerifyEmail = async (name, email, otp) => {
   try {
-    const trasnporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
@@ -40,29 +80,34 @@ const sendVerifyEmail = async (name, email, otp) => {
         user: process.env.MY_EMAIL,
         pass: process.env.MY_PASS,
       },
+      tls: {
+        rejectUnauthorized: false
+      }
     });
 
     const mailOptions = {
       from: process.env.MY_EMAIL,
       to: email,
       subject: "Verification email to Eatable",
-      text: `Hi ${name},Welome! Your OTP is ${otp}`,
+      text: `Hi ${name}, Welcome! Your OTP is ${otp}`,
     };
 
-    //send email
-    trasnporter.sendMail(mailOptions, (error, info) => {
+    // Send email
+    transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.log(error.message);
       } else {
-        console.log(`Email sent  ${info.response}`);
+        console.log(`Email sent: ${info.response}`);
       }
     });
 
     return true;
   } catch (error) {
     console.log(error.message);
+    return false;
   }
 };
+
 
 // ==============================================================================================
 
@@ -87,7 +132,7 @@ export const registerUser = async (req, res) => {
     const { firstName, lastName, email, mobile, password, password_conf } =
       req.body;
 
-    //check if all fields are filled
+    //check if all fields are fille
     if (
       !firstName ||
       !lastName ||
@@ -132,13 +177,15 @@ export const registerUser = async (req, res) => {
 
     let name = firstName + " " + lastName;
 
-    // Send OTP to the user's email
-    if (await sendVerifyEmail( name, email, otp)) {
-      // Include the token in the response headers
 
-      return res.redirect("/verifyotp");;
+    const emailSent = await sendVerifyEmail(name, email, otp);
+
+    // Send OTP to the user's email
+    if (emailSent) {
+      // Redirect to OTP verification page
+      return res.redirect("/verifyotp");
     } else {
-      return res.status(500).send("Error sending OTP. Please try again later.");
+      return res.status(500).send({ status: "failed", message: "Error sending OTP. Please try again later." });
     }
   } catch (error) {
     console.log("Error in registerUser:", error.message);
@@ -221,7 +268,7 @@ export const verifyOTP = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log("this is my password", decoded.hashedPassword);
     if (decoded.otp !== otp) {
-      return res.status(400).send("Invalid OTP");
+      return res.status(400).json({ error: "Invalid OTP" })
     }
     console.log("decoded :", decoded);
     const newUser = new User({
@@ -260,52 +307,53 @@ export const userLogin = async (req, res) => {
 
 //================================================================
 //userVerification
-
 export const verifyLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).send({ message: "Missing email or password" });
+      return res.status(400).json({ message: "Missing email or password" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).send({ message: "Invalid email format" });
+      return res.status(400).json({ message: "Invalid email format" });
     }
 
     const userData = await User.findOne({ email }).select("+password"); // Include password for comparison
 
     if (!userData) {
-      return res.status(401).send({ message: "Incorrect email or password" }); // Avoid revealing if email exists
+      return res.status(401).json({ message: "Incorrect email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, userData.password);
 
     if (!isMatch) {
-      return res.status(401).send({ message: "Incorrect email or password" });
+      return res.status(401).json({ message: "Incorrect email or password" });
     }
-o
-    // Generate token with user role information
+
     const token = jwt.sign(
       { id: userData._id, email: userData.email, isAdmin: userData.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    console.log("token", token);
-    res.cookie("token", token, { httpOnly: true }); // Store token in a cookie
-    // res.setHeader('Authorization', 'Bearer ' + token);
-    // res.setHeader('Authorization', 'Bearer ' + token);
+
+    // Set cookie with fixed attributes
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // Adjust based on your environment
+      sameSite: 'Strict',
+      maxAge: 3600000 // 1 hour in milliseconds
+    });
+
     if (userData.isAdmin) {
-      // If, redirect to admin dashboard
-      return res.redirect("/admin/dashboard");
+      return res.json({ redirect: "/admin/dashboard" });
     } else {
-      // If not an admin, redirect to user Home
-      return res.redirect("/home");
+      return res.json({ redirect: "/home" });
     }
   } catch (error) {
     console.error(error.message);
-    res.status(500).send({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -354,156 +402,304 @@ export const googleSuccess = async (req, res) => {
 };
 
 
-//=========================================================
+//================================== Reset Password ===================================================
 
 //  requestPasswordResetOTP
 
-export const requestPasswordResetOTP = async (req, res) => {
+export const sendForgotPasswordOTP = async (req, res) => {
+
+  console.log("Im in sendForgotPasswordOTP")
+
   const { email } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(404)
-        .send({
-          success: false,
-          message: "User with this email does not exist.",
-        });
+
+
+  console.log("emails from body", email)
+
+    try {
+        
+        const existingUser = await User.findOne({ email: email });
+        if (!existingUser) {
+            return res.status(404).send({ message: "Email not found" });
+        }
+
+        console.log("Existing user", existingUser)
+
+        // Generate OTP
+        const otp = await generateOTP();
+        console.log( "otp forgot pass", otp)
+
+        // Generate temporary token with user data and OTP
+        const token = jwt.sign(
+            { userId: existingUser._id, email: existingUser.email, otp },
+            process.env.JWT_SECRET,
+            { expiresIn: "2m" } 
+        )
+
+        console.log("Created Token", token)
+
+        const emailSent = await sendVerifyEmail(existingUser.firstName, email, otp);
+        if (emailSent) {
+            // Set the token in cookie 
+            res.cookie("token", token, { httpOnly: true });
+            return res.status(200).json({ success: true, message: "OTP sent to email." });
+        } else {
+            return res.status(500).json({ success: false, message: "Error sending OTP. Please try again later." });
+        }
+    } catch (error) {
+        console.log("Error in sendForgotPasswordOTP:", error.message);
+        res.status(500).send("Internal server error");
     }
-
-    const otp = await generateOTP();
-    console.log("OTP :", otp);
-
-    const { firstName, lastName, mobile, password: hashedPassword } = user;
-
-    // const token = jwt.sign({ id: user._id, otp }, process.env.JWT_SECRET, { expiresIn: '10m' });
-    const token = jwt.sign(
-      { id: user._id, firstName, lastName, email, mobile, hashedPassword, otp },
-      process.env.JWT_SECRET,
-      { expiresIn: "2m" }
-    );
-
-    const name = `${firstName} ${lastName}`;
-
-    if (await sendVerifyEmail(name, email, otp)) {
-      res.cookie("resetToken", token, {
-        httpOnly: true,
-        expires: new Date(Date.now() + 10 * 60 * 1000),
-      }); // Expires in 10 minutes
-
-      res
-        .status(200)
-        .send({
-          success: true,
-          message: "OTP sent to your email for password reset.",
-        });
-    }
-  } catch (error) {
-    console.error("Error in requestPasswordResetOTP:", error.message);
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error sending OTP. Please try again later.",
-      });
-  }
 };
 
 
 
-//verifyPasswordResetOTP
+// resend forgot pASSWORD OTP
 
-export const verifyPasswordResetOTP = async (req, res) => {
-  const { otp } = req.body;
-  const token = req.cookies.resetToken;
+export const resendForgotPasswordOTP = async (req, res) => {
 
-  if (!token) {
-    return res
-      .status(400)
-      .send({ success: false, message: "Token missing or expired" });
-  }
-
+  console.log("Im in resend forgot password otp")
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const token = req.cookies.token;
 
-    if (decoded.otp !== otp) {
-      return res.status(400).send({ success: false, message: "Invalid OTP" });
+      // Debugging token and payload
+      console.log("Received token:", token);
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded token:", decoded);
+      
+      const { email } = decoded;
+
+      // Generate new OTP
+      const newOTP = await generateOTP();
+      console.log("Generated OTP:", newOTP);
+
+      // Generate new token with updated OTP
+      const newToken = jwt.sign(
+          { email, otp: newOTP },
+          process.env.JWT_SECRET,
+          { expiresIn: "2m" } 
+      );
+      
+      // Send new OTP
+      const emailSent = await sendVerifyEmail(decoded.firstName, email, newOTP);
+      console.log("Email sent status:", emailSent);
+
+      if (emailSent) {
+          res.cookie("token", newToken, { httpOnly: true });
+          return res.status(200).send({ message: "New OTP sent to email.", newToken });
+      } else {
+          return res.status(500).send("Error sending new OTP. Please try again later.");
+      }
+
+  } catch (error) {
+      console.log("Error in resendForgotPasswordOTP:", error.message);
+      res.status(500).send("Internal server error");
+  }
+};
+
+ 
+//verify otp
+
+
+export const verifyForgotPasswordOTP = async (req, res) => {
+    console.log("Im in forgot pass verify otp");
+
+    const { otp } = req.body;
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(400).send("Token missing or expired");
     }
 
-    res
-      .status(200)
-      .send({
-        success: true,
-        message: "OTP verified. You can now reset your password.",
-      });
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("Decoded token:", decoded);
+        console.log("decoded otp", decoded.otp, "and", otp);
+
+        if (decoded.otp !== otp) {
+          return res.status(400).json({ success: false, message: "Invalid OTP" });
+      }
+
+      res.status(200).json({ success: true, message: "OTP verified successfully. You can now reset your password." });
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error verifying OTP. Please try again later.",
-      });
+      console.log("Error in verifyForgotPasswordOTP:", error.message);
+      res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
 
+//reset password
 
-//resetPassword
+
 
 export const resetPassword = async (req, res) => {
-  const { password } = req.body;
-  const token = req.cookies.resetToken;
+
+  
+  console.log("I'm in reset password");
+
+  const { newPassword } = req.body;
+  const token = req.cookies.token;
+
+  console.log("Received newPassword:", newPassword);
 
   if (!token) {
-    return res
-      .status(400)
-      .send({ success: false, message: "Token missing or expired" });
+      return res.status(400).send("Token missing or expired");
+  }
+
+  if (!newPassword) {
+      return res.status(400).json({ error: "New password is required" });
+  }
+
+  const passwordValidationRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+  if (!passwordValidationRegex.test(newPassword)) {
+      return res.status(400).json({ error: "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character." });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Token decoded:", decoded);
 
-    if (!user) {
-      return res
-        .status(404)
-        .send({ success: false, message: "User not found" });
-    }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const user = await User.findByIdAndUpdate(decoded.userId, { password: hashedPassword });
 
-    user.password = await bcrypt.hash(password, 10);
-    await user.save();
+      if (!user) {
+          return res.status(404).send("User not found");
+      }
 
-    res.clearCookie("resetToken");
-    res
-      .status(200)
-      .send({
-        success: true,
-        message:
-          "Password reset successful. You can now log in with your new password.",
-      });
+      res.clearCookie("token");
+
+      return res.status(200).json({ success: true, message: "Password reset successful. You can now login with your new password." });
   } catch (error) {
-    console.error("Error resetting password:", error.message);
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error resetting password. Please try again later.",
-      });
+      console.log("Error in resetPassword:", error.message);
+      return res.status(500).send("Internal server error");
   }
 };
 
-// ==================================================================================
+
+
+
+//===========================end of forget password====================
+
+// =================================//home page=================================================
+
+export const openingPage = async (req, res, next) => {
+  try {
+
+    // const userId = req.user.id;
+
+    // let user = await User.findOne({ userId })
+
+    console.log("home page rendered")
+
+
+    // console.log("uSER:", user)
+
+       
+        const topProducts = await Order.aggregate([
+          { $unwind: '$products' }, 
+          { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } }, 
+          { $sort: { totalOrdered: -1 } }, 
+          { $limit: 6 },
+          {
+            $lookup: {
+              from: 'products',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'productDetails'
+            }
+          },
+          { $unwind: '$productDetails' }, // Deconstruct the productDetails array
+          { $match: { 'productDetails.isActive': true } }, // Match only active products
+          { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } } 
+        ]);
+    
+        // Extract the product details from the aggregation result
+        const topProductDetails = topProducts.map(product => product.productDetails);
+    
+        // Populate the category field for each top product
+        const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
+        const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
+
+        console.log("Top ordered products:", topProductsWithCategory);
+        console.log("Additional active products:", additionalProducts);
+    
+        // Combine both sets of products (if needed for rendering)
+        const combinedProducts = [...topProductsWithCategory, ...additionalProducts];
+
+        for (const product of combinedProducts) {
+          const salesPrice = await offerHelper.calculateSalesPrice(product);
+          product.salesPrice = salesPrice ? parseFloat(salesPrice) : product.regularPrice;
+        }
+
+    res.render("openingPage", {  topProducts: topProductsWithCategory, products : combinedProducts});
+  } catch (error) {
+
+    console.log("error catched")
+    next(error);
+  }
+};
+
 
 
 export const loadHome = async (req, res, next) => {
   try {
 
-    console.log("home page rendered")
-    const products = await Product.find({isActive: true}).limit(8).populate("category")  //{  }
-    
-    console.log("homepage products:",products)
+    const userId = req.user.id;
 
-    res.render("index", { products });
+    let user = await User.findOne({ userId })
+
+    console.log("home page rendered")
+
+
+    console.log("uSER:", user)
+
+       
+        const topProducts = await Order.aggregate([
+          { $unwind: '$products' }, 
+          { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } }, 
+          { $sort: { totalOrdered: -1 } }, 
+          { $limit: 6 },
+          {
+            $lookup: {
+              from: 'products',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'productDetails'
+            }
+          },
+          { $unwind: '$productDetails' }, // Deconstruct the productDetails array
+          { $match: { 'productDetails.isActive': true } }, // Match only active products
+          { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } } 
+        ]);
+    
+        // Extract the product details from the aggregation result
+        const topProductDetails = topProducts.map(product => product.productDetails);
+    
+        // Populate the category field for each top product
+        const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' })
+  
+
+        const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
+
+        console.log("Top ordered products:", topProductsWithCategory);
+        console.log("Additional active products:", additionalProducts);
+    
+        // Combine both sets of products (if needed for rendering)
+        let combinedProducts = [...topProductsWithCategory, ...additionalProducts];
+
+        for (const product of topProductsWithCategory) {
+          const salesPrice = await offerHelper.calculateSalesPrice(product);
+          product.salesPrice = salesPrice ? parseFloat(salesPrice) : product.regularPrice;
+        }
+
+        for (const product of additionalProducts) {
+          const salesPrice = await offerHelper.calculateSalesPrice(product);
+          product.salesPrice = salesPrice ? parseFloat(salesPrice) : product.regularPrice;
+        }
+
+        
+    res.render("index", {  topProducts: topProductsWithCategory, products : additionalProducts, user :user});
   } catch (error) {
 
     console.log("error catched")
@@ -551,7 +747,7 @@ export const loadProductDetails = async (req, res) => {
 export const postReview = async (req, res) => {
   try {
     const productId = req.params.id;
-
+    
     const { name, email, rating, review } = req.body;
 
     const products = await Product.findById(productId);
@@ -600,33 +796,7 @@ export const getReviews = async (req, res) => {
 
 
 
-//==========================================Shop Product Page===========================================================
 
-
-export const loadShopProduct = async (req, res) => {
-  try {
-
-    const products = await Product.find({isActive: true}).populate("category")
-
-    // extracting unique category names from the populated products
-    const uniqueCategories = [...new Set(products.map(product => product.category.name))];
-
-    // Prepare categories for the view
-    const categories = uniqueCategories.map(name => {
-      return {
-        categoryName: name,
-        count: products.filter(product => product.category.name === name).length
-      };
-    });
-
-    
-      res.render('shopPage',{products: products,uniqueCategories: categories});
-      
-  } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Internal Server Error');
-  }
-};
 
 
 
