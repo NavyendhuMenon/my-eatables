@@ -583,130 +583,96 @@ export const resetPassword = async (req, res) => {
 
 // =================================//home page=================================================
 
-export const openingPage = async (req, res, next) => {
+export const openingPage = async (req, res) => {
   try {
+    console.log("home page rendered");
 
-    // const userId = req.user.id;
-
-    // let user = await User.findOne({ userId })
-
-    console.log("home page rendered")
-
-
-    // console.log("uSER:", user)
-
-       
-        const topProducts = await Order.aggregate([
-          { $unwind: '$products' }, 
-          { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } }, 
-          { $sort: { totalOrdered: -1 } }, 
-          { $limit: 6 },
-          {
-            $lookup: {
-              from: 'products',
-              localField: '_id',
-              foreignField: '_id',
-              as: 'productDetails'
-            }
-          },
-          { $unwind: '$productDetails' }, // Deconstruct the productDetails array
-          { $match: { 'productDetails.isActive': true } }, // Match only active products
-          { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } } 
-        ]);
-    
-        // Extract the product details from the aggregation result
-        const topProductDetails = topProducts.map(product => product.productDetails);
-    
-        // Populate the category field for each top product
-        const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
-        const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
-
-        console.log("Top ordered products:", topProductsWithCategory);
-        console.log("Additional active products:", additionalProducts);
-    
-        // Combine both sets of products (if needed for rendering)
-        const combinedProducts = [...topProductsWithCategory, ...additionalProducts];
-
-        for (const product of combinedProducts) {
-          const salesPrice = await offerHelper.calculateSalesPrice(product);
-          product.salesPrice = salesPrice ? parseFloat(salesPrice) : product.regularPrice;
+    const topProducts = await Order.aggregate([
+      { $unwind: '$products' },
+      { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } },
+      { $sort: { totalOrdered: -1 } },
+      { $limit: 6 },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'productDetails'
         }
+      },
+      { $unwind: '$productDetails' }, // Deconstruct the productDetails array
+      { $match: { 'productDetails.isActive': true } }, // Match only active products
+      { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } }
+    ]);
 
-    res.render("openingPage", {  topProducts: topProductsWithCategory, products : combinedProducts});
+    // Extract the product details from the aggregation result
+    const topProductDetails = topProducts.map(product => product.productDetails);
+
+    // Populate the category field for each top product
+    const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
+
+    const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
+
+    console.log("Top ordered products:", topProductsWithCategory);
+    console.log("Additional active products:", additionalProducts);
+
+    // Combine both sets of products (if needed for rendering)
+    const combinedProducts = [...topProductsWithCategory, ...additionalProducts];
+
+    res.render("openingPage", { topProducts: topProductsWithCategory, products: combinedProducts });
   } catch (error) {
-
-    console.log("error catched")
-    next(error);
+    console.log("error caught:", error);
+    res.status(500).send("Internal Server Error");
   }
 };
 
 
 
-export const loadHome = async (req, res, next) => {
+//home after login 
+export const loadHome = async (req, res) => {
   try {
-
     const userId = req.user.id;
 
-    let user = await User.findOne({ userId })
+    let user = await User.findOne({ userId });
 
-    console.log("home page rendered")
+    console.log("home page rendered");
+    console.log("USER:", user);
 
-
-    console.log("uSER:", user)
-
-       
-        const topProducts = await Order.aggregate([
-          { $unwind: '$products' }, 
-          { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } }, 
-          { $sort: { totalOrdered: -1 } }, 
-          { $limit: 6 },
-          {
-            $lookup: {
-              from: 'products',
-              localField: '_id',
-              foreignField: '_id',
-              as: 'productDetails'
-            }
-          },
-          { $unwind: '$productDetails' }, // Deconstruct the productDetails array
-          { $match: { 'productDetails.isActive': true } }, // Match only active products
-          { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } } 
-        ]);
+    const topProducts = await Order.aggregate([
+      { $unwind: '$products' }, 
+      { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } }, 
+      { $sort: { totalOrdered: -1 } }, 
+      { $limit: 6 },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'productDetails'
+        }
+      },
+      { $unwind: '$productDetails' }, // Deconstruct the productDetails array
+      { $match: { 'productDetails.isActive': true } }, // Match only active products
+      { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } } 
+    ]);
     
-        // Extract the product details from the aggregation result
-        const topProductDetails = topProducts.map(product => product.productDetails);
+    // Extract the product details from the aggregation result
+    const topProductDetails = topProducts.map(product => product.productDetails);
     
-        // Populate the category field for each top product
-        const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' })
+    // Populate the category field for each top product
+    const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
   
+    const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
 
-        const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
+    console.log("Top ordered products:", topProductsWithCategory);
+    console.log("Additional active products:", additionalProducts);
 
-        console.log("Top ordered products:", topProductsWithCategory);
-        console.log("Additional active products:", additionalProducts);
-    
-        // Combine both sets of products (if needed for rendering)
-        let combinedProducts = [...topProductsWithCategory, ...additionalProducts];
-
-        for (const product of topProductsWithCategory) {
-          const salesPrice = await offerHelper.calculateSalesPrice(product);
-          product.salesPrice = salesPrice ? parseFloat(salesPrice) : product.regularPrice;
-        }
-
-        for (const product of additionalProducts) {
-          const salesPrice = await offerHelper.calculateSalesPrice(product);
-          product.salesPrice = salesPrice ? parseFloat(salesPrice) : product.regularPrice;
-        }
-
-        
-    res.render("index", {  topProducts: topProductsWithCategory, products : additionalProducts, user :user});
+    res.render("index", { topProducts: topProductsWithCategory, products: additionalProducts, user: user });
   } catch (error) {
-
-    console.log("error catched")
-    next(error);
+    console.log("error caught:", error);
+    res.status(500).send("Internal Server Error");
   }
 };
-
 
 
 // ===========================================/Product Detail Page/=====================================================================

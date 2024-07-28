@@ -333,9 +333,21 @@
                 <p><strong>Date:</strong> <%= order.createdAt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
                 <p><strong>Total:</strong> ₹ <%= order.totalAmount.toFixed(2) %></p>
                 <div class="text-right">
-                  <button class="btn btn-sm btn-secondary"  onclick="viewOrder('<%= order._id %>')">View Details</button>
-                  <button class="btn btn-sm btn-danger ml-2"  onclick="cancelOrder('<%=order._id %>')">Cancel Order</button>
-                </div>
+                  <button class="btn btn-sm btn-secondary" onclick="viewOrder('<%= order._id %>')">View Details</button>
+                  
+                  <% if (order.paymentStatus !== 'Failed' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Replacement Initiated') { %>
+                      <button class="btn btn-sm btn-danger ml-2" onclick="cancelOrder('<%= order._id %>')">Cancel Order</button>
+                  <% } %>
+                  
+                  <% if (order.paymentStatus === 'Failed') { %>
+                      <button class="btn btn-sm btn-warning ml-2" onclick="retryPayment('<%= order._id %>')">Retry Payment</button>
+                  <% } %>
+                  
+                  <% if (order.orderStatus === 'Delivered' && new Date() - new Date(order.createdAt) < 6 * 60 * 60 * 1000) { %>
+                      <button class="btn btn-sm btn-warning ml-2" onclick="showReturnModal('<%= order._id %>')">Return</button>
+                  <% } %>
+              </div>
+                            
               </div>
             </div>
           </div>
@@ -360,6 +372,80 @@
     </div>
   </div>
 </div>
+
+
+
+<!-- Return Modal -->
+<div id="returnModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="returnModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="returnModalLabel">Return Order</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="returnForm">
+          <div class="form-group">
+            <label for="returnReason">Reason for Return</label>
+            <select class="form-control" id="returnReason" name="returnReason" required>
+              <option value="">Select a reason</option>
+              <option value="Different Product">Different Product</option>
+              <option value="Decayed Product">Decayed Product</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+          <input type="hidden" id="orderId" name="orderId">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Success Modal -->
+<div id="successModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="successModalLabel">Success</h5>
+        <button type="button" class="close" aria-label="Close" onclick="closeModal('successModal')">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="successMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeModal('successModal')">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Error Modal -->
+<div id="errorModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="errorModalLabel">Error</h5>
+        <button type="button" class="close" aria-label="Close" onclick="closeModal('errorModal')">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="errorMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeModal('errorModal')">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -489,6 +575,82 @@
     });
   }
 
+  </script>
+
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+
+  function retryPayment(orderId) {
+    fetch('/retry-payment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            var options = {
+                key: data.key,
+                amount: data.amount,
+                currency: data.currency,
+                name: "Eatables",
+                description: "Retry Transaction",
+                image: "/img/logo.png",
+                order_id: data.razorpayOrderId,
+                handler: function (response) {
+                    fetch('/razorpay/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            orderId: data.orderId,
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(verifyData => {
+                        if (verifyData.success) {
+                            toastr.success('Payment successful!');
+                            window.location.href = `/order/success?orderId=${data.orderId}`;
+                        } else {
+                            toastr.error('Payment verification failed. Please try again.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Verification error: ", error);
+                        toastr.error('Payment verification failed. Please try again.');
+                    });
+                },
+                prefill: {
+                    name: "Navyendhu Menon",
+                    email: "navyendhumenon@gmail.com",
+                    contact: "8921466823",
+                },
+                notes: {
+                    address: "Razorpay Corporate Office",
+                },
+                theme: {
+                    color: "#81C408",
+                }
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+        } else {
+            toastr.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Fetch error: ", error);
+        toastr.error('An error occurred. Please try again.');
+    });
+}
+
 </script>
 
 <!-------------------view order details------------------->
@@ -498,6 +660,64 @@
  window.location.href = `/vieworderdetails?_id=${orderId}`;
    }
 </script>
+
+
+
+
+<!-------------------------Return----------------------------------->
+<script>
+  function showReturnModal(orderId) {
+    document.getElementById('orderId').value = orderId;
+    $('#returnModal').modal('show');
+  }
+
+  document.getElementById('returnForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const orderId = document.getElementById('orderId').value;
+    const reason = document.getElementById('returnReason').value;
+
+    if (reason === 'Others') {
+      $('#returnModal').modal('hide');
+      document.getElementById('errorMessage').innerText = 'Return not available. Contact Eatables.';
+      $('#errorModal').modal('show');
+      return;
+    }
+
+    fetch('/orders/return', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ orderId, reason }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      $('#returnModal').modal('hide');
+      if (data.success) {
+        document.getElementById('successMessage').innerText = 'Return initiated successfully!';
+        $('#successModal').modal('show');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        document.getElementById('errorMessage').innerText = data.message;
+        $('#errorModal').modal('show');
+      }
+    })
+    .catch(error => {
+      console.error('Error initiating return:', error);
+      document.getElementById('errorMessage').innerText = 'An error occurred. Please try again.';
+      $('#errorModal').modal('show');
+    });
+  });
+
+
+  function closeModal(modalId) {
+  $('#' + modalId).modal('hide');
+}
+
+</script>
+
 
 
 <!------------------------------Wallet------------------------------------------>

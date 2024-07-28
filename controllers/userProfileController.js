@@ -396,3 +396,38 @@ export const viewOrderDetail = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+
+// Return order
+export const returnOrder = async (req, res) => {
+  const { orderId, reason } = req.body;
+
+  try {
+      const order = await Order.findById(orderId);
+      if (!order) {
+          return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+
+      const timeElapsed = new Date() - new Date(order.createdAt);
+      if (timeElapsed > 6 * 60 * 60 * 1000) {
+          return res.status(400).json({ success: false, message: 'Return window has expired' });
+      }
+
+      if (order.orderStatus !== 'Delivered') {
+          return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+      }
+
+      if (reason === 'Different Product' || reason === 'Decayed Product') {
+          order.orderStatus = 'Replacement Initiated';
+          order.returnReason = reason;
+          await order.save();
+
+          return res.json({ success: true, message: 'Replacement initiated successfully' });
+      } else {
+          return res.status(400).json({ success: false, message: 'Invalid return reason' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

@@ -5,6 +5,8 @@ import { Offer } from "../models/OfferModel.js";
 
 import { Coupon } from "../models/CouponModel.js";
 
+import { calculateAndUpdateSalesPrice } from "../helper/offerPriceHelper.js";
+
 
 
 
@@ -33,64 +35,75 @@ export const loadOffer = async (req, res) => {
 };
 
 
+//addOffer
 
 export const addOffer = async (req, res) => {
-
-  console.log("IM IN ADD OFFERRR:::::::::::")
+  console.log("IM IN ADD OFFERRR:::::::::::");
 
   const { offerName, discount, validFrom, validUntil, offerType, category, product } = req.body;
-  
-  try {
-      const newOffer = new Offer({
-        offerName,
-        discount,
-        validFrom,
-        validUntil,
-        offerType,
-        category: offerType === 'category' ? category : null,
-        product: offerType === 'product' ? product : null,
-      });
 
-      console.log("NEW OFFFER!!!!!!", newOffer)
-  
-      await newOffer.save();
-  
-      res.status(201).json({ message: 'Offer added successfully!' })
+  try {
+    const newOffer = new Offer({
+      offerName,
+      discount,
+      validFrom,
+      validUntil,
+      offerType,
+      category: offerType === 'category' ? category : null,
+      product: offerType === 'product' ? product : null,
+    });
+
+    console.log("NEW OFFFER!!!!!!", newOffer);
+
+    await newOffer.save();
+
+    // Recalculate and update the sales price for the affected products
+    if (offerType === 'product') {
+      await calculateAndUpdateSalesPrice(product);
+    } else if (offerType === 'category') {
+      const products = await Product.find({ category });
+      for (const prod of products) {
+        await calculateAndUpdateSalesPrice(prod._id);
+      }
+    }
+
+    res.status(201).json({ message: 'Offer added successfully!' });
 
   } catch (err) {
-
-      console.log(err);
-      res.status(500).json({ message: 'Server Error' })
-    }
+    console.log(err);
+    res.status(500).json({ message: 'Server Error' });
+  }
 };
 
 //block and unblock
 export const updateOfferStatus = async (req, res) => {
-
-  console.log('im in block and unblock coupon')
+  console.log('im in block and unblock coupon');
   const { couponId } = req.params;
   const { isActive } = req.body;
 
   try {
-    const coupon = await Offer.findByIdAndUpdate(couponId, { isActive }, { new: true });
+    const coupon = await Offer.findByIdAndUpdate(couponId, { isActive }, { new: true }).populate('category', '_id').populate('product', '_id');
     if (!coupon) {
       return res.status(404).send('Coupon not found');
     }
+
+    // Recalculate and update the sales price for the affected products
+    if (coupon.product) {
+      await calculateAndUpdateSalesPrice(coupon.product._id);
+    } else if (coupon.category) {
+      const products = await Product.find({ category: coupon.category._id });
+      for (const prod of products) {
+        await calculateAndUpdateSalesPrice(prod._id);
+      }
+    }
+
     res.status(200).json(coupon);
+
   } catch (err) {
     console.log(err);
     res.status(500).send('Server Error');
   }
 };
-
-
-
-
-
-
-
-
-
 
   //=========================== Coupons ===================================
 

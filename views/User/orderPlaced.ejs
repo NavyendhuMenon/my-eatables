@@ -178,11 +178,11 @@
                             <% order.products.forEach(product => { %>
                                 <tr>
                                     <td><%= product.productId.title %></td>
-                                    <td>₹ <%= product.productId.regularPrice.toFixed(2) %></td>
+                                    <td>₹ <%= product.productId.salesPrice.toFixed(2) %></td>
                                     <td> <%= product.quantity %></td>
-                                    <td>₹ <%= (product.quantity * product.productId.regularPrice).toFixed(2) %> %></td>
+                                    <td>₹ <%= (product.quantity * product.productId.salesPrice).toFixed(2) %> %></td>
                                 </tr>
-                                <% subtotal += (product.quantity * product.productId.regularPrice).toFixed(2); %>
+                                <% subtotal += (product.quantity * product.productId.salesPrice).toFixed(2); %>
                             <% }); %>
                         <% } %>
                     </tbody>

@@ -19,7 +19,6 @@ import crypto from "crypto";
 
 //load checkoutpage
 
-
 export const loadCheckout = async (req, res) => {
     try {
         const userId = req.user._id; 
@@ -33,16 +32,15 @@ export const loadCheckout = async (req, res) => {
         //  individual product total
         let subtotal = 0;
         cart.product.forEach(item => {
-            item.total = item.productId.regularPrice * item.quantity
+            item.total = item.productId.salesPrice * item.quantity;
             subtotal += item.total; 
         });
 
-        console.log("SubTotal", subtotal)
+        console.log("SubTotal", subtotal);
 
-       
-        const deliveryCharges = subtotal > 400 ? 0 : 45
-        let discount = 0
-        let discountMessage = ""
+        const deliveryCharges = subtotal > 400 ? 0 : 45;
+        let discount = 0;
+        let discountMessage = "";
 
         const { couponCode } = req.query;
 
@@ -52,9 +50,16 @@ export const loadCheckout = async (req, res) => {
 
             if (coupon) {
                 if (coupon.expirationDate > new Date()) {
-                    // Calculate the discount
-                    discount = parseFloat((subtotal * (coupon.discount / 100)).toFixed(2));
-                    discountMessage = `Coupon applied successfully. You saved ₹${discount}!`;
+                    // Check user-specific usage count
+                    const userUsage = coupon.usedBy.find(user => user.userId.toString() === userId);
+
+                    if (userUsage && userUsage.count > coupon.usageLimit) {
+                        discountMessage = "Coupon usage limit exceeded for this user";
+                    } else {
+                        // Calculate the discount
+                        discount = parseFloat((subtotal * (coupon.discount / 100)).toFixed(2));
+                        discountMessage = `Coupon applied successfully. You saved ₹${discount}!`;
+                    }
                 } else {
                     discountMessage = "Coupon code has expired";
                 }
@@ -66,7 +71,7 @@ export const loadCheckout = async (req, res) => {
         // Calculate the grand total
         const grandTotal = subtotal + deliveryCharges - discount;
 
-        console.log("Grandtotal", grandTotal)
+        console.log("Grandtotal", grandTotal);
 
         const userAddress = await Address.find({ userId, isDeleted: false });
         
@@ -85,6 +90,7 @@ export const loadCheckout = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+
 
 
 
@@ -186,7 +192,7 @@ export const loadOrderSuccess = async (req, res) => {
        
         let subtotal = 0;
         order.products.forEach(product => {
-            subtotal += product.quantity * product.productId.regularPrice;
+            subtotal += product.quantity * product.productId.salesPrice;
         });
 
     
@@ -252,7 +258,7 @@ export const razorpayPlaceOrder = async (req, res) => {
         // Calculate subtotal and total amount
         let subtotal = 0;
         cart.product.forEach(item => {
-            subtotal += item.productId.regularPrice * item.quantity;
+            subtotal += item.productId.salesPrice * item.quantity;
         });
 
         const deliveryCharges = subtotal > 400 ? 0 : 45;
@@ -378,6 +384,53 @@ export const verifyPayment = async (req, res) => {
 
 
 
+// retry payment 
+
+
+    export const retryPayment = async (req, res) => {
+
+        console.log("iam on retryPayment")
+        
+        try {
+            const { orderId } = req.body;
+            const order = await Order.findById(orderId).populate('products.productId');
+    
+            if (!order) {
+                return res.status(404).json({ success: false, message: 'Order not found' });
+            }
+    
+            // Create a new Razorpay order
+            const options = {
+                amount: order.totalAmount * 100, // Amount in paise
+                currency: 'INR',
+                receipt: `receipt_order_${Date.now()}`
+            };
+    
+            const razorpayOrder = await razorpay.orders.create(options);
+    
+            // Update order with new Razorpay order ID
+            order.razorpayOrderId = razorpayOrder.id;
+            order.paymentStatus = 'Pending';
+            await order.save();
+    
+            res.json({
+                success: true,
+                message: 'Order created for retry',
+                orderId: order._id,
+                razorpayOrderId: razorpayOrder.id,
+                amount: order.totalAmount * 100,
+                currency: 'INR',
+                key: process.env.RAZORPAY_KEY_ID,
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: 'Server Error' });
+        }
+    };
+    
+
+
+
 
 //-------------------Wallet Payment -----------------------------------------------------------
 
@@ -408,7 +461,7 @@ export const walletOrder = async (req, res) => {
         // Calculate the total amount
         let subtotal = 0;
         cart.product.forEach(item => {
-            subtotal += item.productId.regularPrice * item.quantity;
+            subtotal += item.productId.salesPrice * item.quantity;
         });
 
         const deliveryCharges = subtotal > 400 ? 0 : 45;

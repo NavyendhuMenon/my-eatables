@@ -1,8 +1,10 @@
 import { Offer } from "../models/OfferModel.js";
 
+import Product from "../models/productModel.js"
 
 
-export const calculateSalesPrice = async (product) => {
+export const calculateAndUpdateSalesPrice = async (productId) => {
+  const product = await Product.findById(productId).populate('category');
   const now = new Date();
 
   // Finding active offers for the product
@@ -48,11 +50,15 @@ export const calculateSalesPrice = async (product) => {
     discount = Math.max(...categoryOffers.map(offer => offer.discount));
   }
 
+  let salesPrice = product.regularPrice;
   if (discount > 0) {
     // Calculate the sales price based on the highest discount
-    const salesPrice = product.regularPrice * (1 - discount / 100);
-    return salesPrice.toFixed(2); // Return the sales price
+    salesPrice = product.regularPrice * (1 - discount / 100);
   }
 
-  return product.regularPrice.toFixed(2); // Return the regular price if no offers
+  // Update the sales price in the product model
+  product.salesPrice = salesPrice.toFixed(2);
+  await product.save();
+  
+  return salesPrice.toFixed(2); // Return the sales price
 };

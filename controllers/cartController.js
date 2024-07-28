@@ -32,11 +32,11 @@ export const addToWishlist = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    console.log(userId, "addtowishlist userid ");
+    console.log(userId, "addtowishlist userid");
 
     const productId = req.params.id;
 
-    console.log(productId, "addtowishlist productid ");
+    console.log(productId, "addtowishlist productid");
 
     const user = await User.findById(userId);
     console.log("addtowishlisr:", user);
@@ -44,21 +44,21 @@ export const addToWishlist = async (req, res) => {
     console.log(user, "wishlist user");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    //if productid already in the wishlist
+    // Check if the product is already in the wishlist
     if (!user.wishlist.includes(productId)) {
-      //if not push and save
+      // If not, push and save
       user.wishlist.push(productId);
       await user.save();
 
-      res.status(200).json({ message: "Product added to wishlist" });
+      res.status(200).json({ success: true, message: "Product added to wishlist" });
     } else {
-      res.status(400).json({ message: "Product already in wishlist" });
+      res.status(400).json({ success: false, message: "Product already in wishlist" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ success: false, message: "Server error", error });
   }
 };
 
@@ -179,54 +179,58 @@ export const addToCartFromWishlist = async (req, res) => {
 //loadCart
 
 export const loadCart = async (req, res) => {
- 
   try {
-
     const userId = req.user.id;
     const myCart = await Cart.findOne({ userId }).populate("product.productId");
-    const coupons = await Coupon.find({ isActive: true, expirationDate: { $gte: new Date()}}).sort({ createdAt: -1 });
+
+    // Fetch all active coupons that have not expired
+    const allCoupons = await Coupon.find({
+      isActive: true,
+      expirationDate: { $gte: new Date() }
+    }).sort({ createdAt: -1 });
+
+    // Filter coupons based on user usage count
+    const validCoupons = allCoupons.filter(coupon => {
+      const userUsage = coupon.usedBy.find(u => u.userId.toString() === userId.toString());
+      return !userUsage || userUsage.count < coupon.usageLimit;
+    });
 
     if (!myCart) {
-      return res.render("cart", { myCart: { product: [] }, coupons });
-  }
+      return res.render("cart", { myCart: { product: [] }, coupons: validCoupons });
+    }
 
     console.log("Cart:", myCart);
+    console.log("Filtered Coupons:", validCoupons);
 
-    res.render("cart", { myCart, coupons });
+    res.render("cart", { myCart, coupons: validCoupons });
   } catch (error) {
     console.log(error.message);
+    res.status(500).send('Server Error');
   }
-
 };
+
 
 
 
 //addtoCart
 
 export const addToCart = async (req, res) => {
-
-
   console.log("Hit on add to cart endpoint");
 
   try {
-
     const { productId, quantity } = req.body;
     const userId = req.user.id;
 
     const productData = await Product.findById({ _id: productId });
 
-    console.log("productData", productData)
+    console.log("productData", productData);
 
     if (!productData) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    
-
     if (quantity <= productData.quantity) {
-
-      let userCart = await Cart.findOne({ userId })
-
+      let userCart = await Cart.findOne({ userId });
 
       if (!userCart) {
         userCart = new Cart({ userId: userId, products: [] });
@@ -239,7 +243,6 @@ export const addToCart = async (req, res) => {
       console.log("existing product", existingProduct);
 
       if (existingProduct) {
-        
         existingProduct.quantity += quantity;
       } else {
         userCart.product.push({ productId, quantity });
@@ -249,15 +252,14 @@ export const addToCart = async (req, res) => {
 
       console.log("UserCart", userCart);
 
-      res
-        .status(201)
-        .json({ success: true, message: "Item added to cart successfully" });
+      res.status(201).json({ success: true, message: "Item added to cart successfully" });
     } else {
       console.log("OUT OF STOCK");
       res.status(200).json({ success: false, message: "Out of stock" });
     }
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -395,9 +397,7 @@ export const updateCart = async (req,res)=>{
       return res.status(400).json({ success: false, message: "Invalid action" });
     }
   
-    // }else {
-    //   return res.status(404).json({ success: false, message: "Product not found in cart" });
-    // }
+   
 
   }catch (error) {
     console.log(error.message);
@@ -412,15 +412,14 @@ export const updateCart = async (req,res)=>{
 
 
 export const applyCoupon = async (req, res) => {
-
-console.log("Im in Apply Coupon!!!!!!!!!!!!!")
+  console.log("Im in Apply Coupon!!!!!!!!!!!!!")
   try {
     const { couponCode } = req.body;
     const userId = req.user.id;
 
-    const coupon = await Coupon.findOne({ code: couponCode, isActive: true })
+    const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
 
-    console.log("Applied Coupon", coupon)
+    console.log("Applied Coupon", coupon);
 
     if (!coupon) {
       return res.status(400).json({ success: false, message: "Invalid or expired coupon code" });
@@ -430,30 +429,45 @@ console.log("Im in Apply Coupon!!!!!!!!!!!!!")
       return res.status(400).json({ success: false, message: "Coupon code has expired" });
     }
 
-    const userCart = await Cart.findOne({ userId });
+    // Check user-specific usage count
+    const userUsage = coupon.usedBy.find(user => user.userId.toString() === userId);
+    if (userUsage && userUsage.count > coupon.usageLimit) {
+      return res.status(400).json({ success: false, message: "Coupon not available" });
+    }
 
-    console.log("UserCart::::::::", userCart)
+    const userCart = await Cart.findOne({ userId });
+    console.log("UserCart::::::::", userCart);
 
     if (!userCart) {
       return res.status(400).json({ success: false, message: "Cart not found" });
     }
 
     let subtotal = 0;
-        for (const item of userCart.product) {
-            const product = await Product.findById(item.productId);  
-            if (product) {
-                subtotal += product.regularPrice * item.quantity;
-            } else {
-                return res.status(400).json({ success: false, message: "Product not found" });
-            }
-        }
+    for (const item of userCart.product) {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        subtotal += product.salesPrice * item.quantity;
+      } else {
+        return res.status(400).json({ success: false, message: "Product not found" });
+      }
+    }
 
-        console.log("Subtotal", subtotal);
+    console.log("Subtotal", subtotal);
 
-        const discountAmount = (subtotal * (coupon.discount / 100)).toFixed(2);
-        console.log("Discount amount:::::", discountAmount);
+    const discountAmount = (subtotal * (coupon.discount / 100)).toFixed(2);
+    console.log("Discount amount:::::", discountAmount);
 
-        const newTotal = (subtotal - discountAmount).toFixed(2);
+    const newTotal = (subtotal - discountAmount).toFixed(2);
+
+    // Increment user-specific usage count
+    if (userUsage) {
+      userUsage.count += 1;
+    } else {
+      coupon.usedBy.push({ userId, count: 1 });
+    }
+    coupon.usageCount += 1;
+
+    await coupon.save();
 
     res.status(200).json({
       success: true,

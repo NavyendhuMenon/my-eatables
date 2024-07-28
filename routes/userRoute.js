@@ -102,10 +102,9 @@ userRoute.get('/order/success', auth.isLogin, isUser, checkoutController.loadOrd
 
 //cancelorder
 userRoute.put('/cancelorder/:orderId', auth.isLogin, isUser, profileController.cancelOrder)
-
-//viewOrder
-
 userRoute.get('/vieworderdetails', auth.isLogin, isUser, profileController.viewOrderDetail);
+userRoute.post('/retry-payment', auth.isLogin, isUser, checkoutController.retryPayment);
+userRoute.post('/orders/return', auth.isLogin, isUser, profileController.returnOrder)
 
 
 

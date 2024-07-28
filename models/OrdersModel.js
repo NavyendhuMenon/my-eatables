@@ -35,6 +35,7 @@ const orderSchema = new Schema({
     paymentMethod: { type: String, default: 'COD' },
     paymentStatus: { type: String, default: 'Pending' },
     orderStatus: { type: String, default: 'Pending' },
+    returnReason: {type: String},
     createdAt: { type: Date, default: Date.now },
     orderId: { type: String, unique: true },
     offer: { 
