@@ -114,25 +114,34 @@ const sendVerifyEmail = async (name, email, otp) => {
 //load the otp page
 
 export const loadOtpVerification = async (req, res) => {
-
   try {
-    res.render("getotp");
+    
+    const token = req.cookies.token;
 
+    if (!token) {
+      return res.redirect('/register');
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.redirect('/register');
+      }
+      res.render('getotp', { userData: decoded });
+    });
   } catch (error) {
-    console.log(error.message);
+    console.log("Error in loadOtpVerification:", error.message);
+    res.status(500).json({ status: "failed", message: "Internal server error" });
   }
 };
 
 // user registration
 
 export const registerUser = async (req, res) => {
-  console.log(" ji");
-  console.log(req.body);
   try {
     const { firstName, lastName, email, mobile, password, password_conf } =
       req.body;
 
-    //check if all fields are fille
+    // Check if all fields are filled
     if (
       !firstName ||
       !lastName ||
@@ -141,57 +150,51 @@ export const registerUser = async (req, res) => {
       !password ||
       !password_conf
     ) {
-      return res
-        .status(400)
-        .send({ status: "failed", message: "All fields are required" });
+      return res.status(400).json({ status: "failed", message: "All fields are required" });
     }
 
     if (password !== password_conf) {
-      return res.status(400).send({
+      return res.status(400).json({
         status: "failed",
         message: "Password and confirm password do not match",
       });
     }
 
-    console.log("Condition checked");
-
-    //check if email already exists
+    // Check if email already exists
     const existingUser = await User.findOne({ email: email });
     if (existingUser) {
-      return res.send({ message: "Email already exist!!!" });
+      return res.status(400).json({ status: "failed", message: "Email already exists" });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    //Generate a OTP
+    // Generate an OTP
     const otp = await generateOTP();
-    console.log("OTP :", otp);
 
-    //Generate a temporary token
+    // Generate a temporary token
     const token = jwt.sign(
       { firstName, lastName, email, mobile, hashedPassword, otp },
       process.env.JWT_SECRET,
       { expiresIn: "2m" }
     );
     res.cookie("token", token, { httpOnly: true });
-    // res.setHeader("Authorization", `Bearer ${token}`);
 
     let name = firstName + " " + lastName;
-
 
     const emailSent = await sendVerifyEmail(name, email, otp);
 
     // Send OTP to the user's email
     if (emailSent) {
-      // Redirect to OTP verification page
-      return res.redirect("/verifyotp");
+      return res.status(200).json({ status: "success", message: "OTP sent successfully", redirectUrl: "/verifyotp" });
     } else {
-      return res.status(500).send({ status: "failed", message: "Error sending OTP. Please try again later." });
+      return res.status(500).json({ status: "failed", message: "Error sending OTP. Please try again later." });
     }
   } catch (error) {
     console.log("Error in registerUser:", error.message);
-    res.status(500).send("Internal server error");
+    res.status(500).json({ status: "failed", message: "Internal server error" });
   }
 };
+
 //=========================================================
 
 
@@ -254,23 +257,69 @@ export const resendOTP = async (req, res) => {
 
 //verify OTP
 
+// export const verifyOTP = async (req, res) => {
+//   console.log("verifyotp ");
+//   const { otp } = req.body;
+//   const token = req.cookies.token;
+
+
+//   if (!token) {
+//     return res.status(400).send("Token missing or expired");
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     console.log("this is my password", decoded.hashedPassword);
+//     if (decoded.otp !== otp) {
+//       return res.status(400).json({ error: "Invalid OTP" })
+//     }
+//     console.log("decoded :", decoded);
+//     const newUser = new User({
+//       firstName: decoded.firstName,
+//       lastName: decoded.lastName,
+//       email: decoded.email,
+//       mobile: decoded.mobile,
+//       password: decoded.hashedPassword,
+//       isVerified: true,
+//       isActive:true,
+//     });
+
+//     await newUser.save();
+//     res.clearCookie("token");
+
+//     res.status(200);
+//     // .send("OTP verified successfully! Your account is now active.");
+//     res.redirect("/login");
+//   } catch (error) {
+//     console.log("Error in verifyOTP:", error.message);
+//     res.status(500).send("Internal server error");
+//   }
+// };
+
 export const verifyOTP = async (req, res) => {
-  console.log("verifyotp ");
   const { otp } = req.body;
   const token = req.cookies.token;
 
-
   if (!token) {
-    return res.status(400).send("Token missing or expired");
+    return res.status(400).json({ error: "Token missing or expired" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("this is my password", decoded.hashedPassword);
+
+    // Validate OTP
     if (decoded.otp !== otp) {
-      return res.status(400).json({ error: "Invalid OTP" })
+      return res.status(400).json({ error: "Invalid OTP" });
     }
-    console.log("decoded :", decoded);
+
+    // Check if the email already exists in the database
+    const existingUser = await User.findOne({ email: decoded.email });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists. Please login instead." });
+    }
+
+    // Create a new user if email doesn't exist
     const newUser = new User({
       firstName: decoded.firstName,
       lastName: decoded.lastName,
@@ -278,21 +327,39 @@ export const verifyOTP = async (req, res) => {
       mobile: decoded.mobile,
       password: decoded.hashedPassword,
       isVerified: true,
-      isActive:true,
+      isActive: true,
     });
 
     await newUser.save();
     res.clearCookie("token");
 
-    res.status(200);
-    // .send("OTP verified successfully! Your account is now active.");
-    res.redirect("/login");
+    // Generate a new token for the user
+    const userToken = jwt.sign(
+      { id: newUser._id, email: newUser.email, isAdmin: newUser.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Set the new token in a cookie
+    res.cookie("token", userToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Set to true in production
+      sameSite: 'Strict',
+      maxAge: 3600000 // 1 hour in milliseconds
+    });
+
+    // Determine the redirect URL based on user role
+    const redirectUrl = newUser.isAdmin ? "/admin/dashboard" : "/home";
+    res.status(200).json({
+      message: "OTP verified successfully! Your account is now active.",
+      redirect: redirectUrl
+    });
+
   } catch (error) {
-    console.log("Error in verifyOTP:", error.message);
-    res.status(500).send("Internal server error");
+    console.error("Error in verifyOTP:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
-
 //================================================================
 
 //userlogin
@@ -691,9 +758,11 @@ export const loadProductDetails = async (req, res) => {
       if (products) {
         const relatedProducts = await Product.find({
             category: products.category._id,
-            _id: { $ne: productId } // not require current products
+            _id: { $ne: productId }, // Exclude the current product
+            isActive: true // Only include products that are active
         }).limit(4);
-
+    
+    
         console.log("related products", relatedProducts)
 
         return res.render('productDetails', { products, relatedProducts });

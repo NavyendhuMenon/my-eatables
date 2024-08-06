@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,9 +6,18 @@
     <title>Signup Form</title>
     <link rel="stylesheet" href="/css/reg.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-</head>
-<body>
     <style>
+
+     body {
+            background-image: url('/img/fresh-mixed-vegetables-wooden-box.jpg'); /* Replace with your image path */
+            background-size: cover; /* Ensures the image covers the entire viewport */
+            background-position: center; /* Centers the image */
+            background-repeat: no-repeat; /* Prevents repeating the image */
+            margin: 0; /* Removes default margin */
+            height: 100vh; /* Ensures the body takes full height */
+        }
+        /* Add your styles here */
+
         .input-group {
             position: relative;
             display: flex;
@@ -31,7 +39,38 @@
             margin-top: 10px;
             font-size: 12px;
         }
+
+        .toast {
+            position: fixed;
+            top: 10px; /* Position the toast in the top-right corner */
+            right: 10px;
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 1000;
+            min-width: 200px; /* Ensure toast is wide enough */
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #4CAF50; /* Green */
+        }
+
+        .toast.error {
+            background: #F44336; /* Red */
+        }
     </style>
+</head>
+<body>
+
+   
     <div class="container">
         <div class="left-section">
             <h2>Looks like you're new here!</h2>
@@ -39,7 +78,7 @@
             <img src="/img/logo.png" alt="Organic Vegetables" class="signup-image">
         </div>
         <div class="right-section">
-            <form action="/register" method="post" onsubmit="return validateForm()">
+            <form id="signupForm">
                 <div class="form-group">
                     <input type="text" id="firstName" name="firstName" placeholder="Enter first name" required pattern="[A-Za-z ]+" title="Only letters and spaces are allowed">
                 </div>
@@ -73,6 +112,8 @@
         </div>
     </div>
 
+    <div id="toastContainer"></div>
+
     <script>
         function togglePassword(passwordId, eyeId) {
             var password = document.getElementById(passwordId);
@@ -86,49 +127,55 @@
             }
         }
 
-        function validateForm() {
-  const firstName = document.getElementById('firstName').value.trim();
-  const lastName = document.getElementById('lastName').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const mobile = document.getElementById('mobile').value.trim();
-  const password = document.getElementById('password').value.trim();
-  const confirmPassword = document.getElementById('password_conf').value.trim();
+        async function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type} show`;
+            toast.textContent = message;
 
-  // Check if first name or last name are empty
-  if (firstName === '' || lastName === '') {
-    alert('Please enter a valid first name and last name.');
-    return false;
-  }
+            toastContainer.appendChild(toast);
 
-  // Check if email is in upper case
-  if (email === email.toUpperCase()) {
-    alert('Email should not be in uppercase.');
-    return false;
-  }
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 500); // Match the duration of the transition
+            }, 2000); // Show the toast for 2 seconds
+        }
 
-  // Check if mobile number is 10 digits
-  if (mobile.length !== 10 || !/^[0-9]{10}$/.test(mobile)) {
-    alert('Mobile number must be 10 digits.');
-    return false;
-  }
+        document.getElementById('signupForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-  // Check if password matches the pattern
-  if (!password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]+$/)) {
-    alert('Password must contain at least 8 characters with at least one uppercase letter, one lowercase letter, one number, and one special character.');
-    return false;
-  }
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
 
-  // Check if passwords match
-  if (password !== confirmPassword) {
-    alert("Passwords do not match.");
-    return false;
-  }
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
 
-  // If all validations pass
-  return true;
-}
+                const result = await response.json();
 
-
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = result.redirectUrl;
+                    }, 2000); // Redirect after showing toast for 2 seconds
+                } else {
+                    showToast(result.message || 'Error occurred. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Error during registration:', error);
+                showToast('Error occurred. Please try again.', 'error');
+            }
+        });
     </script>
 </body>
 </html>
+

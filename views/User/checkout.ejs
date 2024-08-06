@@ -153,11 +153,11 @@
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <h5 class="mb-0 me-2">Discount:</h5>
-                                    <p id="discount" class="mb-0">₹ <%= discount %></p>
+                                    <p id="discount" class="mb-0">₹ <%= discount.toFixed(2) %></p>
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <h5 class="mb-0 me-2">Grand Total:</h5>
-                                    <p id="gtotal" class="mb-0">₹ <%= grandTotal %></p>
+                                    <p id="gtotal" class="mb-0">₹ <%= grandTotal.toFixed(2) %></p>
                                 </div>
                             </div>
                         </div>
@@ -165,7 +165,7 @@
                 </div>
                 
             </div>
-            <!-- Payment -->
+<!-- Payment -->
 <div class="row g-4 text-center align-items-center justify-content-center border-bottom py-3">
     <div class="col-12">
         <div class="form-check text-start my-3">
@@ -181,15 +181,25 @@
             <input type="radio" class="form-check-input bg-primary border-0" id="Delivery-2" name="paymentMethod" value="Cash On Delivery">
             <label class="form-check-label" for="Delivery-2">Cash On Delivery</label>
         </div>
-        <button onclick="orderNow()" class="btn btn-primary" style="width: 50%;">Place Order</button>
+        <button id="placeOrderButton" onclick="orderNow()" class="btn btn-primary" style="width: 50%;">Place Order</button>
+    </div>
+    <!-- Popup HTML -->
+    <div id="popup" style="display:none; position:absolute; padding:20px; background-color:lightcoral; color:white; border-radius:5px; z-index:1000; width:300px;">
+        <div style="position:relative; width:100%; height:100%;">
+            <span id="popupMessage"></span>
+        </div>
     </div>
 </div>
+
 </div>
 </div>
 </div>
 
     <!-- Warning message container -->
     <div id="warning" style="color: red;"></div>
+
+   
+
 
 <%- include('../Layouts/footer.ejs') %>
 
@@ -204,15 +214,16 @@
     const couponCode = new URLSearchParams(window.location.search).get('couponCode');
     const discountElement = document.getElementById('discount');
     const warning = document.getElementById('warning');
+    const order = new URLSearchParams(window.location.search).get('order_id');
 
     if (!selectedAddress) {
-        warning.innerText = 'Please select an address.';
-        return;
-    }
+            showPopup('Please select an address.');
+            return;
+        }
 
     if (!selectedPaymentMethod) {
-        warning.innerText = 'Please select a payment method.';
-        return;
+            showPopup('Please select a payment method.');
+            return;
     }
 
     let discount = 0;
@@ -225,7 +236,8 @@
         addressId: selectedAddress.value,
         paymentMethod: selectedPaymentMethod.value,
         couponCode: couponCode || '',
-        discount: discount       
+        discount: discount,
+        order_id: order || ''        
     };
         switch (orderDetails.paymentMethod) {
             case 'Online Payment':
@@ -253,7 +265,7 @@
             if (data.success) {
                 window.location.href = `/order/success?orderId=${data.orderId}`;
             } else {
-                warning.innerText = data.message;
+                showPopup(data.message);
             }
         })
         .catch(error => {
@@ -261,6 +273,9 @@
             warning.innerText = 'An error occurred. Please try again.';
         });
     }
+
+    //wallet
+
     function handleWalletPayment(orderDetails) {
     fetch('/placeorder/wallet', {
         method: 'POST',
@@ -291,6 +306,8 @@
         warning.innerText = 'Server error. Please try again later.';
     });
 }
+    
+      //razorpay
 
     function handleOnlinePayment(orderDetails) {
         fetch('/razorpay/placeorder', {
@@ -383,6 +400,24 @@
             console.error("Fetch error: ", error);
             warning.innerText = 'An error occurred. Please try again.';
         });
+    }
+
+
+
+      function showPopup(message) {
+        const popup = document.getElementById('popup');
+        const popupMessage = document.getElementById('popupMessage');
+        
+        popupMessage.innerText = message;
+        popup.style.display = 'block';
+
+        // Automatically close the popup after 2 seconds
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 2000);
+    }
+    function closePopup() {
+        document.getElementById('popup').style.display = 'none';
     }
 
 

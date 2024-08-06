@@ -122,18 +122,17 @@
 
 
 
+    <!-- Existing head content -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
+
+
+
 <!-- Single Page Header start -->
 <div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6">Order Details</Details></h1>
-    <!-- <ol class="breadcrumb justify-content-center mb-0">
-        <li class="breadcrumb-item"><a href="/customerHome">Home</a></li>
-        <li class="breadcrumb-item"><a href="/mycart">Cart</a></li>
-        <li class="breadcrumb-item"><a href="/checkout">Checkout</a></li>
-        <li class="breadcrumb-item active text-white">Order Placed</li>
-    </ol> -->
+    <h1 class="text-center text-white display-6">Order Details</h1>
 </div>
 <!-- Single Page Header End -->
-
 
 <div id="orderConfirmation" class="container mt-5">
     <div class="row justify-content-center">
@@ -141,32 +140,26 @@
             <div class="card p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <img src="/img/logo.png" alt="Organic Vegetables" class="signup-image" width="200">
-                    <i class="fas fa-print fa-2x print-icon" onclick="printOrderConfirmation()" style="cursor: pointer;"></i>
-                </div>
-                <!-- <h2 class="text-center mb-4">Order Confirmed</h2> -->
-          
-             <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="mb-3">
-                    <h5>Delivery Address</h5>
-                    <%= order.deliveryAddress.name %><br>
-                    <%= order.deliveryAddress.mobile %><br>
-                    <%= order.deliveryAddress.addressLine1 %><br>
-                    <%= order.deliveryAddress.addressLine2 %><br>
-                    <%= order.deliveryAddress.postalCode %>
-                </div>
-                <div class="mb-3">
-                    <h5> Order Details</h5>
-                    <strong>OrderId:</strong> <%= order.orderId %><br>
-                    <strong>Order Status:</strong> <%= order.orderStatus %><br>
-                    <strong>Payment Option:</strong> <%= order.paymentMethod %><br>
-                    <strong>Payment Status:</strong> <%= order.paymentStatus %><br>
+                    <i class="fas fa-print fa-2x print-icon" onclick="generatePDF()" style="cursor: pointer;"></i>
                 </div>
 
-             </div> 
-
-                <!-- <div class="text-center mb-4">
-                    <p>Congratulations! Your order has been confirmed.</p>
-                </div> -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="mb-3">
+                        <h5>Delivery Address</h5>
+                        <%= order.deliveryAddress.name %><br>
+                        <%= order.deliveryAddress.mobile %><br>
+                        <%= order.deliveryAddress.addressLine1 %><br>
+                        <%= order.deliveryAddress.addressLine2 %><br>
+                        <%= order.deliveryAddress.postalCode %>
+                    </div>
+                    <div class="mb-3">
+                        <h5>Order Details</h5>
+                        <strong>OrderId:</strong> <%= order.orderId %><br>
+                        <strong>Order Status:</strong> <%= order.orderStatus %><br>
+                        <strong>Payment Option:</strong> <%= order.paymentMethod %><br>
+                        <strong>Payment Status:</strong> <%= order.paymentStatus %><br>
+                    </div>
+                </div> 
 
                 <h2 class="text-center mb-4">Order Invoice</h2>
 
@@ -179,7 +172,6 @@
                             <th scope="col">Total</th>
                         </tr>
                     </thead>
-
                     <tbody id="cart-body">
                         <% if (order && order.products && order.products.length > 0) { %>
                             <% let subtotal = 0; %>
@@ -188,14 +180,13 @@
                                     <td><%= product.productId.title %></td>
                                     <td>₹ <%= product.productId.salesPrice.toFixed(2) %></td>
                                     <td> <%= product.quantity %></td>
-                                    <td>₹ <%= (product.quantity * product.productId.salesPrice).toFixed(2) %> %></td>
+                                    <td>₹ <%= (product.quantity * product.productId.salesPrice).toFixed(2) %></td>
                                 </tr>
                                 <% subtotal += (product.quantity * product.productId.salesPrice).toFixed(2); %>
                             <% }); %>
                         <% } %>
                     </tbody>
                     <tbody>
-                        <!-- Display calculated values -->
                         <tr>
                             <th scope="row"></th>
                             <td class="py-1"></td>
@@ -231,7 +222,7 @@
                             </td>
                             <td class="py-1">
                                 <div class="py-3">
-                                    <p class="mb-0 text-dark">₹ <%= deliveryCharges %></p> 
+                                    <p class="mb-0 text-dark">₹ <%= deliveryCharges %></p>
                                 </div>
                             </td>
                         </tr>
@@ -244,16 +235,15 @@
                             <td class="py-5"></td>
                             <td class="py-5">
                                 <div class="py-3 border-bottom border-top">
-                                    <p class="mb-0 text-dark" id="gtotal">₹ <%= totalAmount %></p> 
+                                    <p class="mb-0 text-dark" id="gtotal">₹ <%= totalAmount %></p>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
                 <div class="text-center mb-4">
-                    <p> Thanks for choosing Eatables !!!</p>
+                    <p>Thanks for choosing Eatables !!!</p>
                 </div>
-
             </div>
         </div>
     </div>
@@ -267,30 +257,47 @@
     <a href="/Home" class="btn btn-primary">Continue Shopping</a>
 </div>
 
-
 <script>
-    function printOrderConfirmation() {
-        const orderConfirmation = document.getElementById('orderConfirmation');
-        const printWindow = window.open('', '_blank');
-        printWindow.document.open();
-        printWindow.document.write('<html><head><title>Order Confirmation</title>');
-        printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'); // Added Font Awesome CSS link
-        printWindow.document.write('</head><body>');
+function generatePDF() {
+    html2canvas(document.getElementById('orderConfirmation')).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'p', // Portrait
+            unit: 'mm',
+            format: [210, 297] // A4 size in mm
+        });
 
-        // Include the logo image
-        printWindow.document.write('<div class="d-flex justify-content-between align-items-center mb-4">');
-        printWindow.document.write('<img src="/img/logo.png" alt="Organic Vegetables" class="signup-image" width="200">');
-        printWindow.document.write('<i class="fas fa-print fa-2x print-icon" onclick="printOrderConfirmation()" style="cursor: pointer;"></i>');
-        printWindow.document.write('</div>');
+        const pageWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const topMargin = 50; // Top margin in mm
+        const leftMargin = 5; // Left margin in mm
+        const rightMargin = 5; // Right margin in mm
+        const imgWidth = pageWidth - leftMargin - rightMargin; // Width of the image
+        const imgHeight = canvas.height * imgWidth / canvas.width; // Calculate the height of the image based on the aspect ratio
+        let heightLeft = imgHeight;
 
-        // Include the order confirmation content
-        printWindow.document.write(orderConfirmation.innerHTML);
+        let position = topMargin;
+        let xPosition = leftMargin;
 
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.print();
-        printWindow.close();
-    }
+        // Add the first page with top, left, and right margins
+        pdf.addImage(imgData, 'PNG', xPosition, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - topMargin);
+
+        // Add additional pages if needed
+        while (heightLeft > 0) {
+            position = topMargin;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', xPosition, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - topMargin);
+        }
+
+        pdf.save('order-confirmation.pdf');
+    }).catch(error => {
+        console.error('Error generating PDF:', error);
+    });
+}
+
+
 </script>
 
 

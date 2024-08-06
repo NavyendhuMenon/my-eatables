@@ -1,35 +1,52 @@
 import { Order } from "../models/OrdersModel.js"
-import moment from 'moment'
+// import moment from 'moment'
+
+import moment from 'moment-timezone';
 
 
 export const getDailySales = async () => {
+    // Define IST timezone
+    const IST_TZ = 'Asia/Kolkata';
+
     // Start of today in UTC
-    const startOfToday = new Date();
-    startOfToday.setUTCHours(0, 0, 0, 0);
+    const startOfTodayUTC = new Date();
+    startOfTodayUTC.setUTCHours(0, 0, 0, 0);
+
+    // Convert to IST
+    const startOfToday = moment.tz(startOfTodayUTC, IST_TZ).toDate();
 
     // Start of the previous day in UTC
-    const startOfDayBefore = moment(startOfToday).subtract(1, 'day').toDate();
+    const startOfDayBeforeUTC = moment(startOfTodayUTC).subtract(1, 'day').toDate();
 
-    // Current hour in UTC
-    const currentHour = new Date().getUTCHours();
+    // Convert to IST
+    const startOfDayBefore = moment.tz(startOfDayBeforeUTC, IST_TZ).toDate();
 
-    console.log("Start of Today (UTC ISO):", startOfToday.toISOString());
-    console.log("Start of Day Before (UTC ISO):", startOfDayBefore.toISOString());
-    console.log("Current Hour (UTC):", currentHour);
+    // Current hour in IST
+    const currentHourIST = moment().tz(IST_TZ).hour();
+
+    console.log("Start of Today (IST ISO):", moment(startOfToday).tz(IST_TZ).toISOString());
+    console.log("Start of Day Before (IST ISO):", moment(startOfDayBefore).tz(IST_TZ).toISOString());
+    console.log("Current Hour (IST):", currentHourIST);
 
     try {
-        // Aggregate sales data by hour
+        // Aggregate sales data by hour in IST
         const salesData = await Order.aggregate([
             {
                 $match: {
-                    createdAt: { $gte: startOfDayBefore, $lt: startOfToday }
-                    // orderStatus: 'Delivered' // Adjust this if needed
+                    createdAt: { $gte: startOfDayBefore, $lt: startOfToday },
+                    // orderStatus: 'Pending' // Adjust this if needed
+                }
+            },
+            {
+                $project: {
+                    hour: { $hour: { date: '$createdAt', timezone: IST_TZ } },
+                    totalAmount: 1
                 }
             },
             {
                 $group: {
                     _id: {
-                        hour: { $hour: { date: '$createdAt', timezone: 'UTC' } } // Ensure correct timezone
+                        hour: '$hour'
                     },
                     totalAmount: { $sum: '$totalAmount' }
                 }
@@ -46,7 +63,7 @@ export const getDailySales = async () => {
 
         // Populate labels and data for each hour of the day up to the current hour
         for (let hour = 0; hour < 24; hour++) {
-            if (hour <= currentHour) {
+            if (hour <= currentHourIST) {
                 labels.push(`${hour}:00`);
                 const hourData = salesData.find(d => d._id.hour === hour);
                 data.push(hourData ? hourData.totalAmount : 0);
@@ -61,7 +78,7 @@ export const getDailySales = async () => {
         // if (allZero) {
         //     data.length = 0; // Clear the current data
         //     const staticValues = [50, 100, 200, 150, 75, 25, 300, 400, 250, 100, 50, 75]; // Example static values
-        //     for (let i = 0; i <= currentHour; i++) {
+        //     for (let i = 0; i <= currentHourIST; i++) {
         //         data.push(staticValues[i % staticValues.length]);
         //     }
         // }

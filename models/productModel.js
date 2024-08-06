@@ -58,9 +58,7 @@ const productSchema = new mongoose.Schema({
       required: true,
     },
   ],
-  tags: {
-    type: String,
-  },
+  tags: [String], // Updated to be an array of strings
   isActive: {
     type: Boolean,
     default: true,
@@ -81,6 +79,7 @@ const productSchema = new mongoose.Schema({
 },
   { timestamps: true }
 );
+
 
 
 

@@ -321,90 +321,65 @@ if (productIndex > -1) {
 
 
 
-//increment and decrement cart 
 
-export const updateCart = async (req,res)=>{
-  
+
+export const updateCart = async (req, res) => {
   try {
-        
-    console.log("iam on incriment controller")
+    console.log("iam on increment controller");
 
-    const { productId, action  }= req.body
+    const { productId, action } = req.body;
     const userId = req.user.id;
 
-    console.log("Incriment product id :",userId ,"and", productId )
+    console.log("Increment product id :", userId, "and", productId);
 
-    const userCart = await Cart.findOne({ userId })
+    const userCart = await Cart.findOne({ userId });
 
-    if(!userCart){
-
-      return res.status(400).json({ success: false, message: "Cart not found" })
-
+    if (!userCart) {
+      return res.status(400).json({ success: false, message: "Cart not found" });
     }
 
-    const product = userCart. product. find ((item)=> item.productId.toString()===productId.toString());
+    const product = userCart.product.find((item) => item.productId.toString() === productId.toString());
 
-    if (!product){
-
+    if (!product) {
       return res.status(404).json({ success: false, message: "Product not found in cart" });
-
     }
 
+    const productData = await Product.findById(productId);
 
-      const productData = await Product.findById(productId)
+    if (!productData) {
+      return res.status(404).json({ success: false, message: "Product not found in inventory" });
+    }
 
-      if (!productData) {
-        return res.status(404).json({ success: false, message: "Product not found in inventory" });
-      }
+    const maxQuantity = 10; // Define the maximum quantity limit
 
     if (action === 'increment') {
-
-      if (product.quantity < productData.quantity) {
-
-        //product.quantity is the product in the user's cart
-        // productData.quantity  is the total available quantity of the product in the store or inventory
-       
+      if (product.quantity < productData.quantity && product.quantity < maxQuantity) {
         product.quantity += 1;
-
-        // productData.quantity -= 1; // Decrement the quantity in the inventory
-
-        await userCart.save()
-
-        // await productData.save() // Save the updated product inventory
-
+        await userCart.save();
         return res.status(200).json({ success: true, message: "Quantity incremented successfully", newQuantity: product.quantity });
+      } else if (product.quantity >= maxQuantity) {
+        return res.status(400).json({ success: false, message: `Cannot exceed maximum quantity of ${maxQuantity}` });
       } else {
         return res.status(400).json({ success: false, message: "Out of stock" });
       }
-
-    }else if (action === 'decrement') {
-      
-      if (product.quantity >1){
-
-        product.quantity -=1
-      
-        // productData.quantity += 1; // increment the quantity in the inventory
-
-        await userCart.save()
-        
-        // await productData.save() // Save the updated product inventory
-  
+    } else if (action === 'decrement') {
+      if (product.quantity > 1) {
+        product.quantity -= 1;
+        await userCart.save();
         return res.status(200).json({ success: true, message: "Quantity decremented successfully", newQuantity: product.quantity });
-      }else {
-          return res.status(400).json({ success: false, message: "Quantity cannot be less than 1" });
+      } else {
+        return res.status(400).json({ success: false, message: "Quantity cannot be less than 1" });
       }
-    }else {
+    } else {
       return res.status(400).json({ success: false, message: "Invalid action" });
     }
-  
-   
 
-  }catch (error) {
+  } catch (error) {
     console.log(error.message);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
-
 };
+
 
 
 
