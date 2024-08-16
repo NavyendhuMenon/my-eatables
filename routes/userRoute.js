@@ -47,6 +47,7 @@ userRoute.post('/reset-password', userController.resetPassword );
 
 
 userRoute.get('/home',auth.isLogin,isUser,userController.loadHome)
+// userRoute.get('/',auth.isLogin,isUser,userController.loadHome)
 
 userRoute.get('/productDetails/:id',auth.isLogin,isUser, userController.loadProductDetails, userController.getReviews)
 userRoute.post('/productDetails/:id/review', auth.isLogin, isUser, userController.postReview);
@@ -104,6 +105,11 @@ userRoute.get('/order/success', auth.isLogin, isUser, checkoutController.loadOrd
 userRoute.put('/cancelorder/:orderId', auth.isLogin, isUser, profileController.cancelOrder)
 userRoute.get('/vieworderdetails', auth.isLogin, isUser, profileController.viewOrderDetail);
 userRoute.post('/orders/return', auth.isLogin, isUser, profileController.returnOrder)
+
+
+
+userRoute.get('/contact', userController.loadContactPage)
+userRoute.post('/contact-enquiry', userController.contactEnquiry);
 
 
 

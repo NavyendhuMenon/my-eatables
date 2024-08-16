@@ -1,23 +1,37 @@
 function flyToCart(flyer, flyTo) {
+  // Clone the flyer image
   const flyerClone = flyer.cloneNode(true);
   flyerClone.classList.add('flyer-clone');
+  
+  // Apply initial styles to the cloned flyer
+  const f = flyer.getBoundingClientRect();
+  flyerClone.style.position = 'absolute';
+  flyerClone.style.left = `${f.left}px`;
+  flyerClone.style.top = `${f.top}px`;
+  flyerClone.style.width = `${f.width}px`;
+  flyerClone.style.height = `${f.height}px`;
+  flyerClone.style.transition = 'transform 0.5s ease-in-out, opacity 0.5s ease-in-out';
+  flyerClone.style.zIndex = 1000;
 
+  // Append the clone to the body
   document.body.appendChild(flyerClone);
 
-  // Get bounding rectangles
+  // Get the destination bounding rectangle
   const ft = flyTo.getBoundingClientRect();
-  const f = flyer.getBoundingClientRect();
 
   // Calculate translation distances
   const deltaX = ft.left - f.left;
   const deltaY = ft.top - f.top;
+  const scale = Math.min(ft.width / f.width, ft.height / f.height); // Scale to fit
 
-  // Apply transform and transition
-  flyerClone.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
-  flyerClone.style.opacity = 0;
+  // Trigger the transform for the animation
+  requestAnimationFrame(() => {
+    flyerClone.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scale})`;
+    flyerClone.style.opacity = 0;
+  });
 
   // After the animation duration, remove the clone
-  setTimeout(() => {
-      flyerClone.remove();
-  }, 500); // Adjust timing to match your animation duration
+  flyerClone.addEventListener('transitionend', () => {
+    flyerClone.remove();
+  });
 }

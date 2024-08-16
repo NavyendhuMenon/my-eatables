@@ -9,21 +9,28 @@ import {category} from "../models/categoryModel.js";
 
 export const loadShopProduct = async (req, res) => {
   try {
-    
-    const products = await Product.find({ isActive: true }).populate('category')
+    // Fetch active products
+    const products = await Product.find({ isActive: true }).populate('category');
 
-    const categories = await category.find()
+    // Fetch active categories
+    const categories = await category.find({ isActive: true });
 
-    
+    // Fetch products with offers, limited to 3
+    const productsWithOffers = await Product.find({ offers: { $exists: true, $ne: [] } })
+                                            .populate('offers')
+                                            .limit(3);
+
     res.render('shopPage', {
       products: products,
-      category: categories
+      category: categories,
+      offerProduct: productsWithOffers
     });
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Internal Server Error');
   }
 };
+
 
 
 //sort Products 

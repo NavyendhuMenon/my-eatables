@@ -26,27 +26,9 @@ const storage = multer.diskStorage({
   }
 });
 
-// File size limit (5 MB)
-// const fileSizeLimit = 5 * 1024 * 1024; // 5 MB
-
-// File filter
-const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type'), false);
-  }
-};
 
 // Configure multer
-export const upload = multer({
-  storage: storage,
-  // limits: {
-  //   fileSize: fileSizeLimit
-  // },
-  fileFilter: fileFilter
-});
+export const upload = multer({ storage: storage }).array('images', 5)
 
 
 //crop image
@@ -327,43 +309,41 @@ export const loadProduct = async (req, res) => {
 // };
 
 export const addNewProduct = async (req, res) => {
-
-  console.log("image add")
   try {
     let arrImages = [];
-    for (let i = 0; i < req.files.length; i++) {
-      arrImages[i] = req.files[i].filename;
-      console.log("Filename of the cropped image is", req.files[i].filename);
+    if (req.files) {
+        arrImages = req.files.map(file => file.filename);
+        console.log("Filename of the cropped image is", arrImages);
+    } else {
+        console.log("No files uploaded.");
     }
-    console.log(arrImages, "images");
 
     console.log("I am in add new product");
 
     const {
-      pname,
-      pdescription,
-      regularPrice,
-      salesPrice,
-      tags,
-      isActive,
-      quantity,
-      catStatus,
-      pcategory
+        pname,
+        pdescription,
+        regularPrice,
+        salesPrice,
+        tags,
+        isActive,
+        quantity,
+        catStatus,
+        pcategory
     } = req.body;
 
-
     const product = new Product({
-      title: pname,
-      description: pdescription,
-      regularPrice: parseFloat(regularPrice),
-      salesPrice: salesPrice ? parseFloat(salesPrice) : undefined,
-      date: new Date(),
-      image: arrImages,
-      tags: tags ? tags.split(',') : [], // Assuming tags are comma-separated
-      category: pcategory,
-      isActive: isActive === 'true',
-      quantity: parseInt(quantity, 10),
-      catStatus: catStatus === 'true',
+        title: pname,
+        description: pdescription,
+        regularPrice: parseFloat(regularPrice),
+        salesPrice: salesPrice ? parseFloat(salesPrice) : undefined,
+        date: new Date(),
+        image: arrImages,
+        tags: tags ? tags.split(',').map(tag => tag.trim()) : [], // Split and trim tags
+        category: pcategory,
+        isActive: isActive === 'true',
+        quantity: parseInt(quantity, 10),
+        catStatus: catStatus === 'true',
     });
 
     const productData = await product.save();
@@ -371,13 +351,13 @@ export const addNewProduct = async (req, res) => {
     console.log("MyProduct", productData);
 
     if (productData) {
-      res.redirect("/admin/productlist");
+        res.redirect("/admin/productlist");
     } else {
-      res.json({ success: false });
+        res.status(400).json({ success: false, message: 'Product could not be saved.' });
     }
   } catch (error) {
     console.error('Error adding product:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error occurred while adding product.' });
   }
 };
 //==============================================================================

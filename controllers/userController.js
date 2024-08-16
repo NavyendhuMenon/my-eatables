@@ -654,10 +654,11 @@ export const openingPage = async (req, res) => {
   try {
     console.log("home page rendered");
 
+
     const topProducts = await Order.aggregate([
-      { $unwind: '$products' },
-      { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } },
-      { $sort: { totalOrdered: -1 } },
+      { $unwind: '$products' }, 
+      { $group: { _id: '$products.productId', totalOrdered: { $sum: '$products.quantity' } } }, 
+      { $sort: { totalOrdered: -1 } }, 
       { $limit: 6 },
       {
         $lookup: {
@@ -669,24 +670,21 @@ export const openingPage = async (req, res) => {
       },
       { $unwind: '$productDetails' }, // Deconstruct the productDetails array
       { $match: { 'productDetails.isActive': true } }, // Match only active products
-      { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } }
+      { $project: { _id: 0, productId: '$_id', totalOrdered: 1, productDetails: 1 } } 
     ]);
-
+    
     // Extract the product details from the aggregation result
     const topProductDetails = topProducts.map(product => product.productDetails);
-
+    
     // Populate the category field for each top product
     const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
-
+  
     const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
 
     console.log("Top ordered products:", topProductsWithCategory);
     console.log("Additional active products:", additionalProducts);
 
-    // Combine both sets of products (if needed for rendering)
-    const combinedProducts = [...topProductsWithCategory, ...additionalProducts];
-
-    res.render("openingPage", { topProducts: topProductsWithCategory, products: combinedProducts });
+    res.render("openingPage", { topProducts: topProductsWithCategory, products: additionalProducts });
   } catch (error) {
     console.log("error caught:", error);
     res.status(500).send("Internal Server Error");
@@ -697,10 +695,16 @@ export const openingPage = async (req, res) => {
 
 //home after login 
 export const loadHome = async (req, res) => {
+
+  console.log("request user",req.user)
   try {
     const userId = req.user.id;
 
-    let user = await User.findOne({ userId });
+    console.log("UserID:", userId)
+
+    let user = await User.findOne({ _id: userId });
+
+    
 
     console.log("home page rendered");
     console.log("USER:", user);
@@ -830,6 +834,59 @@ export const getReviews = async (req, res) => {
 
 
 
+
+
+
+//contact page 
+
+
+
+export const loadContactPage = async (req,res)=>{
+
+  try{
+
+    res.render('contact')
+
+  }catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error");
+  }
+}
+
+
+export const contactEnquiry = async (req, res) => {
+  console.log("Im in contact enquiry");
+  console.log("Im in reqbody", req.body);
+
+  const { name, email, message } = req.body;
+
+  // Configure Nodemailer with the tls option to accept self-signed certificates
+  const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+          user: process.env.MY_EMAIL, // Your email
+          pass: process.env.MY_PASS,  // Your email password
+      },
+      tls: {
+          rejectUnauthorized: false, // Accept self-signed certificates
+      },
+  });
+
+  const mailOptions = {
+      from: email,
+      to: 'eatablesforyou@gmail.com', // Replace with your email address
+      subject: `New Enquiry Form Submission from ${name}`,
+      text: `You have a new message from ${name} (${email}):\n\n${message}`,
+  };
+
+  try {
+      await transporter.sendMail(mailOptions);
+      res.json({ success: true, message: 'Your message has been sent successfully!' });
+  } catch (error) {
+      console.error('Error sending email:', error);
+      res.json({ success: false, message: 'Something went wrong, please try again later.' });
+  }
+};
 
 
 

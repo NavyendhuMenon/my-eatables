@@ -108,7 +108,7 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="input-upload">
-                                                        <input class="form-control" id="fileInput" type="file" name="image" accept="image/*" multiple onchange="validateFileInput()">
+                                                        <input class="form-control" id="fileInput" type="file" name="images" accept="image/*" multiple onchange="validateFileInput()">
                                                         <span id="fileError" style="color: red; display: none;">Please select only image files.</span>
                                                     </div>
                                                     <div class="preview-container mt-3" id="previewContainer">
@@ -256,35 +256,48 @@
     return true;
  }
 
-  document.getElementById('uploadForm').addEventListener('submit', async function (event) {
-      event.preventDefault(); // Prevent form submission here only
+ document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+    event.preventDefault(); // Prevent default form submission
 
-      if (!validateForm()) return;
+    if (!validateForm()) return; // Check if form is valid
 
-      const formData = new FormData(this);
+    const formData = new FormData(this);
+   croppedImages.forEach((imageData, index) => {
+    const blob = dataURLtoBlob(imageData);
+    formData.append(`image_${index}`, blob, `image_${index}.jpg`);
+});
 
-      // Convert FormData to a readable format for debugging
-      for (let [key, value] of formData.entries()) {
-          console.log(`${key}: ${value}`);
-      }
 
-      try {
-          const response = await fetch('/admin/addProducts', {
-              method: 'POST',
-              body: formData
-          });
+    try {
+        const response = await fetch('/admin/addProducts', {
+            method: 'POST',
+            body: formData
+        });
 
-          const result = await response.json();
-          if (response.ok) {
-              alert(result.message);
-          } else {
-              alert(result.message);
-          }
-      } catch (error) {
-          console.error('Error:', error);
-          alert('An error occurred while adding the product.');
-      }
-  });
+        const result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Success message
+        } else {
+            alert(result.message); // Error message
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while adding the product.');
+    }
+});
+
+// Helper function to convert dataURL to Blob
+function dataURLtoBlob(dataURL) {
+    const [header, data] = dataURL.split(',');
+    const mime = header.match(/:(.*?);/)[1];
+    const binary = atob(data);
+    const array = [];
+    for (let i = 0; i < binary.length; i++) {
+        array.push(binary.charCodeAt(i));
+    }
+    return new Blob([new Uint8Array(array)], { type: mime });
+}
+
 
   function validateForm() {
       if (croppedImages.length === 0) {
