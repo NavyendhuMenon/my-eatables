@@ -171,6 +171,8 @@ export const registerUser = async (req, res) => {
     // Generate an OTP
     const otp = await generateOTP();
 
+    console.log("OTP:", otp)
+
     // Generate a temporary token
     const token = jwt.sign(
       { firstName, lastName, email, mobile, hashedPassword, otp },
@@ -387,7 +389,7 @@ export const verifyLogin = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    const userData = await User.findOne({ email }).select("+password"); // Include password for comparison
+    const userData = await User.findOne({ email, isActive: true}).select("+password"); // Include password for comparison
 
     if (!userData) {
       return res.status(401).json({ message: "Incorrect email or password" });

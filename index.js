@@ -1,6 +1,6 @@
 import  mongoose from "mongoose" 
-mongoose.connect("mongodb://127.0.0.1:27017/Eatable", { useNewUrlParser: true, useUnifiedTopology: true })
-.then(() => console.log("MongoDB connected"))
+mongoose.connect(process.env.ATLAS_CONNECT)
+.then(() => console.log("Connected with DataBase"))
 .catch(err => console.error("MongoDB connection error:", err));
 
 
@@ -21,7 +21,7 @@ app.use(express.static('public'))
 app.use('/',userRoute)
 app.use('/admin', adminRoute)
 
-const PORT= 3000
+const PORT= process.env.PORT || 5000
 app.listen(PORT,()=>{
-    console.log("Server started on http://localhost:3000");
+    console.log(`Server started on http://localhost:${PORT}`);
 })
