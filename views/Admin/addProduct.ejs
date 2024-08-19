@@ -222,8 +222,6 @@
               croppedImagesData.value = JSON.stringify(croppedImages);
           });
 
-          console.log("cropped image", croppedImages);
-
           cropperContainer.style.display = 'none';
           cropper.destroy();
           fileInput.value = '';
@@ -262,11 +260,11 @@
     if (!validateForm()) return; // Check if form is valid
 
     const formData = new FormData(this);
-   croppedImages.forEach((imageData, index) => {
-    const blob = dataURLtoBlob(imageData);
-    formData.append(`image_${index}`, blob, `image_${index}.jpg`);
-});
 
+    croppedImages.forEach((imageData, index) => {
+        const blob = dataURLtoBlob(imageData);
+        formData.append('croppedImages[]', blob, `image_${index}.jpg`);
+    });
 
     try {
         const response = await fetch('/admin/addProducts', {
@@ -276,13 +274,13 @@
 
         const result = await response.json();
         if (response.ok) {
-            alert(result.message); // Success message
+            toastr.success(result.message); // Success message
         } else {
-            alert(result.message); // Error message
+            toastr.error(result.message); // Error message
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while adding the product.');
+        toastr.error('An error occurred while adding the product.');
     }
 });
 
@@ -298,15 +296,15 @@ function dataURLtoBlob(dataURL) {
     return new Blob([new Uint8Array(array)], { type: mime });
 }
 
-
   function validateForm() {
       if (croppedImages.length === 0) {
-          alert('Please crop and add at least one image.');
+          toastr.warning('Please crop and add at least one image.');
           return false;
       }
       return true;
   }
 </script>
+
 
 
 

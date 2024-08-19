@@ -204,56 +204,53 @@ export const registerUser = async (req, res) => {
 // Resend OTP
 export const resendOTP = async (req, res) => {
   try {
-
     const token = req.cookies.token;
+    if (!token) {
+      return res.status(400).send("Token missing or expired");
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded Token:", decoded);
+
     // Generate a new OTP
     const newOTP = await generateOTP();
 
-    // Updating the OTP in the decoded token
-    decoded.otp = newOTP;
+    console.log("newOTP", newOTP)
 
-    console.log(decoded.exp, "decoded exp")
-
-    delete decoded.exp;
-
+    // Create a new token with the updated OTP
     const { firstName, lastName, email, mobile, hashedPassword } = decoded;
-    
+
     if (!email) {
       return res.status(400).send("Email not defined in the token");
     }
 
     const newToken = jwt.sign(
-      { firstName, lastName, email, mobile, hashedPassword, otp : newOTP },
+      { firstName, lastName, email, mobile, hashedPassword, otp: newOTP },
       process.env.JWT_SECRET,
-      { expiresIn: "2m" }
+      { expiresIn: "2m" } // Ensure this matches your use case
     );
 
     // Send the new OTP to the user's email
-    let name = firstName + " " + lastName;
+    let name = `${firstName} ${lastName}`;
 
-    if (await sendVerifyEmail(name,email, newOTP)) {
+    if (await sendVerifyEmail(name, email, newOTP)) {
       res.cookie("token", newToken, {
         httpOnly: true,
-        expires: new Date(Date.now() + 120000),
-      }); // Expires in 2 minutes (120,000 milliseconds)
+        expires: new Date(Date.now() + 120000), // Expires in 2 minutes
+      });
       
       return res.status(200).send({
         message: "New OTP sent to email.",
-        newToken: newToken, // Include the new token in the response body if needed
+        newToken, // Include the new token in the response if needed
       });
     } else {
-      return res
-        .status(500)
-        .send("Error sending new OTP. Please try again later.");
+      return res.status(500).send("Error sending new OTP. Please try again later.");
     }
   } catch (error) {
     console.log("Error in resendOTP:", error.message);
     res.status(500).send("Internal server error");
   }
 };
+
 
 //=========================================================
 
@@ -297,10 +294,11 @@ export const resendOTP = async (req, res) => {
 //     res.status(500).send("Internal server error");
 //   }
 // };
-
 export const verifyOTP = async (req, res) => {
   const { otp } = req.body;
   const token = req.cookies.token;
+
+  console.log("otp received", otp)
 
   if (!token) {
     return res.status(400).json({ error: "Token missing or expired" });
@@ -308,6 +306,8 @@ export const verifyOTP = async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    console.log("Token OTP:", decoded.otp);
 
     // Validate OTP
     if (decoded.otp !== otp) {
@@ -362,6 +362,7 @@ export const verifyOTP = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 //================================================================
 
 //userlogin
@@ -486,7 +487,11 @@ export const sendForgotPasswordOTP = async (req, res) => {
 
     try {
         
-        const existingUser = await User.findOne({ email: email });
+      const existingUser = await User.findOne({ email: email });
+
+
+      console.log("Existing user", existingUser)
+
         if (!existingUser) {
             return res.status(404).send({ message: "Email not found" });
         }

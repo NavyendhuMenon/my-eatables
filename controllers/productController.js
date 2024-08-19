@@ -13,22 +13,37 @@ import { v4 as uuidv4 } from "uuid"; // uuid for unique file names
 
 
 // ===============================Multer Function=================================================================
-
-// Multer storage configuration
 // Storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'd:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads'); // Destination folder
+    cb(null, "d:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads"); // Path to save uploaded files
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + uuidv4();
-    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.mimetype.split('/')[1]); // Unique filename
-  }
+    const uniqueSuffix = Date.now() + "-" + uuidv4();
+    cb(null, file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]);
+  },
 });
 
+// File filter to allow only images
+const fileFilter = function (req, file, cb) {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'images'), false);
+  }
+};
 
 // Configure multer
-export const upload = multer({ storage: storage }).array('images', 5)
+export const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    files: 5 // Accept a maximum of 5 files
+  }
+}).array('images', 5); // Adjust field name if needed
+
+
+
 
 
 //crop image
@@ -310,6 +325,8 @@ export const loadProduct = async (req, res) => {
 
 export const addNewProduct = async (req, res) => {
   try {
+
+    console.log("image from frontend", req.files)
     let arrImages = [];
     if (req.files) {
         arrImages = req.files.map(file => file.filename);

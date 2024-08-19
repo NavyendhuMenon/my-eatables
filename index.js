@@ -1,5 +1,6 @@
 import  mongoose from "mongoose" 
 mongoose.connect(process.env.ATLAS_CONNECT)
+// mongoose.connect(process.env.MONGOOSE_CONNECT)
 .then(() => console.log("Connected with DataBase"))
 .catch(err => console.error("MongoDB connection error:", err));
 
