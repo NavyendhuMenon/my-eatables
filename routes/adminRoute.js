@@ -10,15 +10,12 @@ import *as userController from "../controllers/userController.js"
 
 import *as promoController from "../controllers/promotionalOffers.js"
 
+import { upload } from "../controllers/productController.js";
+
 
 
 import cookieParser from "cookie-parser";
 
-import cors from "cors"
-import passport from "passport"
-// import passportStratergy from "./"npm
-import multer from "multer"
-// const upload=multer({dest:"uploads/"})
 
 
 adminRoute.set('view engine','ejs')
@@ -59,13 +56,13 @@ adminRoute.post('/updateCategory',auth.isLogin ,isAdmin,adminCategory.EditCatego
 
 
 adminRoute.get ('/products',auth.isLogin ,isAdmin,productController.loadProduct)
-adminRoute.post('/addProducts',auth.isLogin ,isAdmin,productController.upload, productController.addNewProduct)
+adminRoute.post('/addProducts',auth.isLogin ,isAdmin,upload.array('image',5),productController.cropImages, productController.addNewProduct)
 // adminRoute.post('/products', auth.isLogin,isAdmin, productController.addProduct)
 adminRoute.get ('/productList',auth.isLogin ,isAdmin,productController.loadProductList)
 adminRoute.get('/unBlockProduct',auth.isLogin ,isAdmin,productController.unblockProduct)
 adminRoute.get('/blockProduct',auth.isLogin ,isAdmin,productController.blockProduct)
 adminRoute.get('/editProduct', auth.isLogin, isAdmin, productController.editproductLoad);
-adminRoute.post('/editProduct', auth.isLogin, isAdmin, productController.upload,  productController.EditProduct);
+adminRoute.post('/editProduct', auth.isLogin, isAdmin, productController.upload.array('image',5),productController.cropImages,productController.EditProduct);
 adminRoute.delete('/deleteImage',auth.isLogin, isAdmin,productController. deleteProductImage);
 
 

@@ -94,7 +94,7 @@
                                         </div> -->
                                     </div>
                                     <div class="col-lg-12">
-                                        <h4 class="mb-3">Featured products</h4>
+                                        <!-- <h4 class="mb-3">Featured products</h4>
                                         <div class="d-flex align-items-center justify-content-start">
                                             <div class="rounded me-4" style="width: 100px; height: 100px;">
                                                 <img src="img/featur-1.jpg" class="img-fluid rounded" alt="">
@@ -113,12 +113,12 @@
                                                     <h5 class="text-danger text-decoration-line-through">4.11 $</h5>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> -->
                                         
                                         
-                                        <div class="d-flex justify-content-center my-4">
+                                        <!-- <div class="d-flex justify-content-center my-4">
                                             <a href="#" class="btn border border-secondary px-4 py-3 rounded-pill text-primary w-100">Vew More</a>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="position-relative">
@@ -176,7 +176,6 @@
                               
                                     <% } %>
                                   <% } %>
-                              
                                 </div>
                                 <br>
                                 <!-- Pagination controls -->
@@ -235,6 +234,44 @@
 <!-----------------Script for pagination------------------------->
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    const itemsPerPage = 9;
+    const $productItems = $('.product-item');
+    const totalItems = $productItems.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    function showPage(pageNum) {
+      $productItems.hide();
+      const startIndex = (pageNum - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      $productItems.slice(startIndex, endIndex).show();
+
+      $('#product-pagination').find('li.page-item').removeClass('active');
+      $(`#product-pagination li.page-item[data-page="${pageNum}"]`).addClass('active');
+    }
+
+    function generatePagination() {
+      let paginationHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHTML += `<li class="page-item" data-page="${i}"><a class="page-link" href="#">${i}</a></li>`;
+      }
+      $('#product-pagination').html(paginationHTML);
+      $('#product-pagination li.page-item:first').addClass('active');
+    }
+
+    generatePagination();
+    showPage(1);
+
+    $(document).on('click', '#product-pagination .page-link', function(e) {
+      e.preventDefault();
+      const pageNum = $(this).parent().data('page');
+      showPage(pageNum);
+    });
+  });
+</script>
+
 <script>
   $(document).ready(function() {
     var itemsPerPage = 9; // Number of items per page
@@ -262,6 +299,8 @@
       $('#product-pagination').html(paginationHTML);
       $('#product-pagination').find('li.page-item:first').addClass('active'); // Set first page as active initially
     }
+
+ 
 
     // Function to update products list and pagination
     function updateProducts(newProducts) {
@@ -316,30 +355,7 @@
       showPage(1); // Show the first page of items
     }
 
-    // Initial setup for default products
-    (async function loadDefaultProducts() {
-      try {
-        const response = await fetch('/shop/products', {
-          headers: { 'Accept': 'application/json' }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          updateProducts(data.products);
-        } else {
-          console.error('Failed to fetch default products');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    })();
-
-    // Pagination click handler
-    $('#product-pagination').on('click', 'li.page-item', function(e) {
-      e.preventDefault(); // Prevent default anchor behavior
-      var pageNum = $(this).data('page');
-      showPage(pageNum); // Show the selected page
-    });
+   
 
     // Filter by price
     document.getElementById('rangeInput').addEventListener('input', async function(event) {

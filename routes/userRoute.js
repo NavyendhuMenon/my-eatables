@@ -34,7 +34,6 @@ userRoute.get ('/login/google',passport.authenticate('google', { scope: ['profil
 userRoute.get('/login/google/callback',passport.authenticate('google', { failureRedirect: '/login' , session: false}),userController.googleSuccess)
 
 userRoute.get('/login',auth.isLogout,userController.userLogin) 
-// userRoute.get('/',auth.isLogout,userController.userLogin)
 userRoute.post('/login',auth.isLogout,userController.verifyLogin)
 
 
@@ -47,7 +46,7 @@ userRoute.post('/reset-password', userController.resetPassword );
 
 
 userRoute.get('/home',auth.isLogin,isUser,userController.loadHome)
-// userRoute.get('/',auth.isLogin,isUser,userController.loadHome)
+
 
 userRoute.get('/productDetails/:id',auth.isLogin,isUser, userController.loadProductDetails, userController.getReviews)
 userRoute.post('/productDetails/:id/review', auth.isLogin, isUser, userController.postReview);
@@ -121,8 +120,7 @@ userRoute.get('/logout', userController.logout)
 
 
 
-import *as trail from "../controllers/trialController.js"
-userRoute.get('/hi',auth.isLogout,trail.loadTrialLogin) 
+
 
 
 

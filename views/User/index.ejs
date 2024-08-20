@@ -1,26 +1,7 @@
 <%- include('../Layouts/header.ejs') %>
 
 
-   
 
-    <!-- Modal Search Start -->
-    <!-- <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content rounded-0">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Search by keyword</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body d-flex align-items-center">
-                    <div class="input-group w-75 mx-auto d-flex">
-                        <input type="search" class="form-control p-3" placeholder="keywords" aria-describedby="search-icon-1">
-                        <span id="search-icon-1" class="input-group-text p-3"><i class="fa fa-search"></i></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> -->
-    <!-- Modal Search End -->
 
 
     <!-- Hero Start -->
@@ -223,7 +204,7 @@
 
 
     <!-- Featurs Start -->
-    <div class="container-fluid service py-5">
+    <!-- <div class="container-fluid service py-5">
         <div class="container py-5">
             <div class="row g-4 justify-content-center">
                 <div class="col-md-6 col-lg-4">
@@ -258,8 +239,8 @@
                             <img src="img/featur-3.jpg" class="img-fluid rounded-top w-100" alt="">
                             <div class="px-4 rounded-bottom">
                                 <div class="service-content bg-secondary text-center p-4 rounded">
-                                    <h5 class="text-white">Exotic Vegitable</h5>
-                                    <h3 class="mb-0">Discount 30$</h3>
+                                    <h5 class="text-white">Exotic Vegetable</h5>
+                                    <h3 class="mb-0">Discount ₹ 30</h3>
                                 </div>
                             </div>
                         </div>
@@ -267,7 +248,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
     <!-- Featurs End -->
 
 
@@ -550,7 +531,7 @@
                         <div class="counter bg-white rounded p-5">
                             <i class="fa fa-users text-secondary"></i>
                             <h4>Available Products</h4>
-                            <h1>789</h1>
+                            <h1><%= activeProductCount %></h1>
                         </div>
                     </div>
                 </div>
@@ -572,16 +553,18 @@
                     <div class="position-relative">
                         <i class="fa fa-quote-right fa-2x text-secondary position-absolute" style="bottom: 30px; right: 0;"></i>
                         <div class="mb-4 pb-4 border-bottom border-secondary">
-                            <p class="mb-0">Lorem Ipsum is simply dummy text of the printing Ipsum has been the industry's standard dummy text ever since the 1500s,
-                            </p>
+                            <p class="mb-0">
+                                Eatable is your go-to destination for premium organic products, offering a wide selection of fresh vegetables, fruits, and high-quality meat. Discover the best of nature's bounty delivered right to your doorstep.
+                              </p>
+                              
                         </div>
                         <div class="d-flex align-items-center flex-nowrap">
                             <div class="bg-secondary rounded">
-                                <img src="img/testimonial-1.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
+                                <img src="/img/avatar.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
                             </div>
                             <div class="ms-4 d-block">
-                                <h4 class="text-dark">Client Name</h4>
-                                <p class="m-0 pb-3">Profession</p>
+                                <h4 class="text-dark">Robin Mathew</h4>
+                                <p class="m-0 pb-3">Film Director<p>
                                 <div class="d-flex pe-5">
                                     <i class="fas fa-star text-primary"></i>
                                     <i class="fas fa-star text-primary"></i>
@@ -597,16 +580,18 @@
                     <div class="position-relative">
                         <i class="fa fa-quote-right fa-2x text-secondary position-absolute" style="bottom: 30px; right: 0;"></i>
                         <div class="mb-4 pb-4 border-bottom border-secondary">
-                            <p class="mb-0">Lorem Ipsum is simply dummy text of the printing Ipsum has been the industry's standard dummy text ever since the 1500s,
-                            </p>
+                            <p class="mb-0">
+                                At Eatable, we specialize in providing the finest organic produce, including farm-fresh vegetables, succulent fruits, and top-quality meat. Experience the convenience of shopping for healthy and natural products all in one place.
+                              </p>
+                              
                         </div>
                         <div class="d-flex align-items-center flex-nowrap">
                             <div class="bg-secondary rounded">
-                                <img src="img/testimonial-1.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
+                                <img src="/img/avatar.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
                             </div>
                             <div class="ms-4 d-block">
-                                <h4 class="text-dark">Client Name</h4>
-                                <p class="m-0 pb-3">Profession</p>
+                                <h4 class="text-dark">Nithin Molly</h4>
+                                <p class="m-0 pb-3">Actor</p>
                                 <div class="d-flex pe-5">
                                     <i class="fas fa-star text-primary"></i>
                                     <i class="fas fa-star text-primary"></i>
@@ -622,16 +607,18 @@
                     <div class="position-relative">
                         <i class="fa fa-quote-right fa-2x text-secondary position-absolute" style="bottom: 30px; right: 0;"></i>
                         <div class="mb-4 pb-4 border-bottom border-secondary">
-                            <p class="mb-0">Lorem Ipsum is simply dummy text of the printing Ipsum has been the industry's standard dummy text ever since the 1500s,
-                            </p>
+                            <p class="mb-0">
+                                Eatable brings you a curated selection of the best organic vegetables, fruits, and meats. Our commitment to quality ensures that you receive only the freshest and most nutritious products directly to your home.
+                              </p>
+                              
                         </div>
                         <div class="d-flex align-items-center flex-nowrap">
                             <div class="bg-secondary rounded">
-                                <img src="img/testimonial-1.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
+                                <img src="/img/avatar.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
                             </div>
                             <div class="ms-4 d-block">
-                                <h4 class="text-dark">Client Name</h4>
-                                <p class="m-0 pb-3">Profession</p>
+                                <h4 class="text-dark">Edwin Philip</h4>
+                                <p class="m-0 pb-3">Doctor</p>
                                 <div class="d-flex pe-5">
                                     <i class="fas fa-star text-primary"></i>
                                     <i class="fas fa-star text-primary"></i>
@@ -661,13 +648,41 @@
                               
 
                           <!-- Include jQuery -->
-                          <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                          <!-- Include Toastr CSS and JS -->
+F                          <!-- Include Toastr CSS and JS -->
                           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
                           <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-                     
-                          <script src="/js/flyToCart.js"></script>
-     
+                     <script>
+                          function flyToCart(flyer, flyTo) {
+                            // Create a clone of the product image
+                            const flyerClone = flyer.cloneNode(true);
+                    
+                            // Apply the fly-to-cart class for animation
+                            flyerClone.classList.add('fly-to-cart-animation');
+                    
+                            // Set the initial position of the clone
+                            flyerClone.style.position = 'absolute';
+                            flyerClone.style.top = flyer.getBoundingClientRect().top + 'px';
+                            flyerClone.style.left = flyer.getBoundingClientRect().left + 'px';
+                            flyerClone.style.width = flyer.offsetWidth + 'px';
+                            flyerClone.style.height = flyer.offsetHeight + 'px';
+                            flyerClone.style.zIndex = '1000';
+                    
+                            // Append the clone to the body
+                            document.body.appendChild(flyerClone);
+                    
+                            // Wait for the animation to finish, then remove the clone
+                            flyerClone.addEventListener('animationend', () => {
+                                document.body.removeChild(flyerClone);
+                            });
+                    
+                            // Set the final position of the clone
+                            setTimeout(() => {
+                                flyerClone.style.top = flyTo.getBoundingClientRect().top + 'px';
+                                flyerClone.style.left = flyTo.getBoundingClientRect().left + 'px';
+                            }, 10); // Delay to ensure the initial position is set
+                        }
+                    
+                    </script>
                           <script>
                             
 
@@ -703,6 +718,9 @@
                             }
 
                           </script>
+
+
+
      
                            <script>
                              function addToWishlist(productId) {

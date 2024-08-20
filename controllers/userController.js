@@ -686,12 +686,14 @@ export const openingPage = async (req, res) => {
     // Populate the category field for each top product
     const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
   
-    const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
+    const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category')
+
+    const activeProductCount = await Product.countDocuments({ isActive: true });
 
     console.log("Top ordered products:", topProductsWithCategory);
     console.log("Additional active products:", additionalProducts);
 
-    res.render("openingPage", { topProducts: topProductsWithCategory, products: additionalProducts });
+    res.render("openingPage", { topProducts: topProductsWithCategory, products: additionalProducts, activeProductCount: activeProductCount });
   } catch (error) {
     console.log("error caught:", error);
     res.status(500).send("Internal Server Error");
@@ -741,11 +743,12 @@ export const loadHome = async (req, res) => {
     const topProductsWithCategory = await Product.populate(topProductDetails, { path: 'category' });
   
     const additionalProducts = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(8).populate('category');
+    const activeProductCount = await Product.countDocuments({ isActive: true });
 
     console.log("Top ordered products:", topProductsWithCategory);
     console.log("Additional active products:", additionalProducts);
 
-    res.render("index", { topProducts: topProductsWithCategory, products: additionalProducts, user: user });
+    res.render("index", { topProducts: topProductsWithCategory, products: additionalProducts, user: user,  activeProductCount :  activeProductCount });
   } catch (error) {
     console.log("error caught:", error);
     res.status(500).send("Internal Server Error");

@@ -5,7 +5,7 @@ import multer from "multer";
 import sharp from "sharp";
 
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid"; // uuid for unique file names
+import { v4 as uuidv4 } from "uuid"
 
 
 
@@ -14,72 +14,59 @@ import { v4 as uuidv4 } from "uuid"; // uuid for unique file names
 
 // ===============================Multer Function=================================================================
 // Storage configuration
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "d:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads"); // Path to save uploaded files
+    cb(null, "d:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads"); // Using relative path
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + uuidv4();
-    cb(null, file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]
+    );
   },
 });
 
-// File filter to allow only images
-const fileFilter = function (req, file, cb) {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'images'), false);
-  }
-};
-
-// Configure multer
-export const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    files: 5 // Accept a maximum of 5 files
-  }
-}).array('images', 5); // Adjust field name if needed
-
-
+// storage configuration
+export const upload = multer({ storage: storage });
 
 
 
 //crop image
-// export const cropImages = async (req, res, next) => {
-//   if (!req.files) return next();
+export const cropImages = async (req, res, next) => {
+  if (!req.files) return next();
 
-//   try {
-//     await Promise.all(
-//       req.files.map(async (file) => {
-//         const inputPath = file.path;
-//         const outputPath = `./public/uploads/cropped-${file.filename}`;
-//         console.log(inputPath, outputPath, "on crop");
+  try {
+    await Promise.all(
+      req.files.map(async (file) => {
+        const inputPath = file.path;
+        const outputPath = `./public/uploads/cropped-${file.filename}`;
+        console.log(inputPath, outputPath, "on crop");
 
-//         console.log("outputPath:", outputPath);
+        console.log("outputPath:", outputPath);
 
-//         await sharp(inputPath)
-//           .resize(500, 500) // Set the desired width and height
-//           .toFile(outputPath);
+        await sharp(inputPath)
+          .resize(500, 500) // Set the desired width and height
+          .toFile(outputPath);
 
-//         try {
-//           file.path = outputPath;
-//           file.filename = `cropped-${file.filename}`;
+        try {
+          file.path = outputPath;
+          file.filename = `cropped-${file.filename}`;
 
-//           console.log("file.filename:", file.filename);
-//         } catch (unlinkError) {
-//           console.error(`Error in deleting the file:`, unlinkError);
-//         }
-//       })
-//     );
+          console.log("file.filename:", file.filename);
+        } catch (unlinkError) {
+          console.error(`Error in deleting the file:`, unlinkError);
+        }
+      })
+    );
 
-//     next();
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send("Error processing image");
-//   }
-// };
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error processing image");
+  }
+};
 
 //============================ Product controller =================================================
 
@@ -323,44 +310,42 @@ export const loadProduct = async (req, res) => {
 //   }
 // };
 
+// posting addNewProduct
 export const addNewProduct = async (req, res) => {
   try {
-
-    console.log("image from frontend", req.files)
     let arrImages = [];
-    if (req.files) {
-        arrImages = req.files.map(file => file.filename);
-        console.log("Filename of the cropped image is", arrImages);
-    } else {
-        console.log("No files uploaded.");
+    for (let i = 0; i < req.files.length; i++) {
+      arrImages[i] = req.files[i].filename;
+      console.log("filename of the cropped image is ", req.files[i].filename);
     }
+    console.log(arrImages, "images");
 
-    console.log("I am in add new product");
+    console.log("Iam in add new product");
 
     const {
-        pname,
-        pdescription,
-        regularPrice,
-        salesPrice,
-        tags,
-        isActive,
-        quantity,
-        catStatus,
-        pcategory
+      pname,
+      pdescription,
+      regularPrice,
+      salesPrice,
+      tags,
+      isActive,
+      quantity,
+      catStatus,
+      pcategory,
     } = req.body;
 
     const product = new Product({
-        title: pname,
-        description: pdescription,
-        regularPrice: parseFloat(regularPrice),
-        salesPrice: salesPrice ? parseFloat(salesPrice) : undefined,
-        date: new Date(),
-        image: arrImages,
-        tags: tags ? tags.split(',').map(tag => tag.trim()) : [], // Split and trim tags
-        category: pcategory,
-        isActive: isActive === 'true',
-        quantity: parseInt(quantity, 10),
-        catStatus: catStatus === 'true',
+      title: pname,
+      description: pdescription,
+      regularPrice: regularPrice,
+      salesPrice: salesPrice,
+      date: new Date(),
+      image: arrImages,
+      tags: tags,
+      category: pcategory,
+      isActive: isActive,
+      quantity: quantity,
+      catStatus: catStatus,
     });
 
     const productData = await product.save();
@@ -368,13 +353,14 @@ export const addNewProduct = async (req, res) => {
     console.log("MyProduct", productData);
 
     if (productData) {
-        res.redirect("/admin/productlist");
+      // res.json({success:true,message:'Product added successfully '})
+      res.redirect("/admin/productlist");
     } else {
-        res.status(400).json({ success: false, message: 'Product could not be saved.' });
+      res.json({ success: false });
     }
   } catch (error) {
-    console.error('Error adding product:', error);
-    res.status(500).json({ success: false, message: 'Server error occurred while adding product.' });
+    console.error(error);
   }
 };
+
 //==============================================================================
