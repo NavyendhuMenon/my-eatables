@@ -30,7 +30,7 @@ userRoute.get('/verifyotp',userController.loadOtpVerification)
 userRoute.post('/verifyotp',userController.verifyOTP)
 userRoute.post('/resendotp',userController.resendOTP);
 
-userRoute.get ('/login/google',passport.authenticate('google', { scope: ['profile', 'email'], session: false}))
+userRoute.get ('/login/google',passport.authenticate('google', { scope: ['profile', 'email'], session: false, callbackURL: `${process.env.BASE_URL}/login/google/callback`}))
 userRoute.get('/login/google/callback',passport.authenticate('google', { failureRedirect: '/login' , session: false}),userController.googleSuccess)
 
 userRoute.get('/login',auth.isLogout,userController.userLogin) 

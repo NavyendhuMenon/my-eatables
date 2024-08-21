@@ -58,7 +58,9 @@
                 </thead>
                 <tbody>
                     <% myCart.product.forEach(item => { %>
+                      
                     <tr>
+                      
                         <th scope="row">
                             <div class="d-flex align-items-center">
                                 <img src="/uploads/<%= item.productId.image[0] %>" class="img-fluid me-5 rounded-circle" style="width: 80px; height: 80px;" alt="">
@@ -89,12 +91,16 @@
                             <p class="mb-0 mt-4"  data-product-id="<%= item.productId._id %>"  data-unit-price="<%= item.productId.salesPrice %>">₹<%= (item.productId.salesPrice * item.quantity).toFixed(2) %> </p>
                         </td>
                         <td>
-                            <button class="btn btn-md rounded-circle bg-light border mt-4" onclick="removeFromCart('<%= item.productId._id %>')" >
+                           
+                            <button class="btn btn-md rounded-circle bg-light border mt-4"  onclick="removeFromCart('<%= item.productId._id %>')" >
                                 <i class="fa fa-times text-danger"></i>
                             </button>
+                           
                         </td>
+                      
                     
                     </tr>
+                   
                     <% }); %>
                       
                 </tbody>
@@ -273,6 +279,9 @@
 
 <script>
 
+
+const removePCart= document.getElementById('remove');
+
     function removeFromCart(productId) {
       fetch(`/mycart`, {
         method: 'DELETE',
@@ -284,7 +293,7 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          toastr.success(data.message);
+          toastr.success(data.message)
           setTimeout(() => {
                 location.reload(); // Reload the page to reflect changes
             }, 750);

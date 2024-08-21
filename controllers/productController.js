@@ -1,9 +1,8 @@
 import Product from "../models/productModel.js";
 import { category } from "../models/categoryModel.js";
 import multer from "multer";
-
+import path from 'path';
 import sharp from "sharp";
-
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid"
 
@@ -17,7 +16,8 @@ import { v4 as uuidv4 } from "uuid"
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "d:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads"); // Using relative path
+    // cb(null, "d:\\Users\\user\\Desktop\\BROTOTYPE\\Eatable\\public\\uploads"); // Using relative path
+    cb(null, path.join(path.resolve(), 'public', 'uploads'));
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + uuidv4();
