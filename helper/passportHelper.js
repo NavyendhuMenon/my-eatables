@@ -10,9 +10,9 @@ passport.use(
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
       callbackURL:
-      process.env.NODE_ENV === "production"
-      ? "https://eatables.shop/login/google/callback"  // Production
-      : "http://localhost:3000/login/google/callback"  // Development
+      // process.env.NODE_ENV === "production"? 
+      "https://eatables.shop/login/google/callback"  // Production
+      // : "http://localhost:3000/login/google/callback"  // Development
 
     },
     async (accessToken, refreshToken, profile, done) => {
