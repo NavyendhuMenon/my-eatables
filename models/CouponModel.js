@@ -22,6 +22,10 @@ const couponSchema = new Schema({
         type: Boolean,
         default: true
     },
+    isExpired: {
+        type: Boolean,
+        default: false
+    },
     usageLimit: {
         type: Number,
         required: true,

@@ -75,7 +75,7 @@
             </div>
             <div class="container px-0">
                 <nav class="navbar navbar-light bg-white navbar-expand-xl">
-                    <a href="index.html" class="navbar-brand"><h1 class="text-primary display-6">Eatables</h1></a>
+                    <a href="/home" class="navbar-brand"><h1 class="text-primary display-6">Eatables</h1></a>
                     <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                         <span class="fa fa-bars text-primary"></span>
                     </button>
@@ -157,7 +157,7 @@
                     <div class="carousel-inner" role="listbox">
                         <div class="carousel-item active rounded">
                             <img src="img/hero-img-1.png" class="img-fluid w-100 h-100 bg-secondary rounded" alt="First slide">
-                            <a href="#" class="btn px-4 py-2 text-white rounded">Fruites</a>
+                            <a href="#" class="btn px-4 py-2 text-white rounded">Fruits</a>
                         </div>
                         <div class="carousel-item rounded">
                             <img src="img/hero-img-2.jpg" class="img-fluid w-100 h-100 rounded" alt="Second slide">
@@ -313,7 +313,7 @@
 
                                      
                                       <div class="d-flex justify-content-center">
-                                        <a href="" onclick="handleAddToCart(this, '<%= products[i]._id %>', event)" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                        <a onclick="addToCart('<%= products[i]._id %>')" class="btn border border-secondary rounded-pill px-3 text-primary">
                                           <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
                                         </a>
 
@@ -621,7 +621,7 @@
                                 <% } %>
                               </p>
                             <div class="d-flex justify-content-center">
-                                <a href="" onclick="handleAddToCart(this, '<%= topProducts[i]._id %>', event)" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                <a onclick="addToCart('<%= products[i]._id %>')" class="btn border border-secondary rounded-pill px-3 text-primary">
                                     <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
                                 </a>
                             </div>
@@ -788,50 +788,50 @@ F                          <!-- Include Toastr CSS and JS -->
                       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
                       <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
                  <script>
-                      function flyToCart(flyer, flyTo) {
-                        // Create a clone of the product image
-                        const flyerClone = flyer.cloneNode(true);
+                    //   function flyToCart(flyer, flyTo) {
+                    //     // Create a clone of the product image
+                    //     const flyerClone = flyer.cloneNode(true);
                 
-                        // Apply the fly-to-cart class for animation
-                        flyerClone.classList.add('fly-to-cart-animation');
+                    //     // Apply the fly-to-cart class for animation
+                    //     flyerClone.classList.add('fly-to-cart-animation');
                 
-                        // Set the initial position of the clone
-                        flyerClone.style.position = 'absolute';
-                        flyerClone.style.top = flyer.getBoundingClientRect().top + 'px';
-                        flyerClone.style.left = flyer.getBoundingClientRect().left + 'px';
-                        flyerClone.style.width = flyer.offsetWidth + 'px';
-                        flyerClone.style.height = flyer.offsetHeight + 'px';
-                        flyerClone.style.zIndex = '1000';
+                    //     // Set the initial position of the clone
+                    //     flyerClone.style.position = 'absolute';
+                    //     flyerClone.style.top = flyer.getBoundingClientRect().top + 'px';
+                    //     flyerClone.style.left = flyer.getBoundingClientRect().left + 'px';
+                    //     flyerClone.style.width = flyer.offsetWidth + 'px';
+                    //     flyerClone.style.height = flyer.offsetHeight + 'px';
+                    //     flyerClone.style.zIndex = '1000';
                 
-                        // Append the clone to the body
-                        document.body.appendChild(flyerClone);
+                    //     // Append the clone to the body
+                    //     document.body.appendChild(flyerClone);
                 
-                        // Wait for the animation to finish, then remove the clone
-                        flyerClone.addEventListener('animationend', () => {
-                            document.body.removeChild(flyerClone);
-                        });
+                    //     // Wait for the animation to finish, then remove the clone
+                    //     flyerClone.addEventListener('animationend', () => {
+                    //         document.body.removeChild(flyerClone);
+                    //     });
                 
-                        // Set the final position of the clone
-                        setTimeout(() => {
-                            flyerClone.style.top = flyTo.getBoundingClientRect().top + 'px';
-                            flyerClone.style.left = flyTo.getBoundingClientRect().left + 'px';
-                        }, 10); // Delay to ensure the initial position is set
-                    }
+                    //     // Set the final position of the clone
+                    //     setTimeout(() => {
+                    //         flyerClone.style.top = flyTo.getBoundingClientRect().top + 'px';
+                    //         flyerClone.style.left = flyTo.getBoundingClientRect().left + 'px';
+                    //     }, 10); // Delay to ensure the initial position is set
+                    // }
                 
                 </script>
                       <script>
                         
 
-                        function handleAddToCart(button, productId, event) {
-                          event.preventDefault();
-                          const productElement = button.closest('.fruite-item');
-                          const flyer = productElement.querySelector('img');
-                          const flyTo = document.getElementById('cartIcon');
+                        // function handleAddToCart(button, productId, event) {
+                        //   event.preventDefault();
+                        //   const productElement = button.closest('.fruite-item');
+                        //   const flyer = productElement.querySelector('img');
+                        //   const flyTo = document.getElementById('cartIcon');
                     
-                          flyToCart(flyer, flyTo);
+                        //   flyToCart(flyer, flyTo);
                     
-                          addToCart(productId);
-                        }
+                        //   addToCart(productId);
+                        // }
                     
                         function addToCart(productId) {
                           const quantity = 1; 

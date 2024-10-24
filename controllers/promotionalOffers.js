@@ -110,17 +110,26 @@ export const updateOfferStatus = async (req, res) => {
 
   export const loadCoupon = async (req, res) => {
     try {
-      const coupons = await Coupon.find().sort({ createdAt: -1 }); // Fetch and sort coupons
+      // Fetch all coupons
+      const coupons = await Coupon.find().sort({ createdAt: -1 });
   
-      res.render('Coupon', { coupons });
+      // Check and update isActive status for expired coupons
+      for (let coupon of coupons) {
+        if (coupon.expirationDate < new Date() && coupon.isActive) {
+          coupon.isExpired = true;
+          await coupon.save();
+        }
+      }
+  
+      // Re-fetch the updated list of coupons
+      const updatedCoupons = await Coupon.find().sort({ createdAt: -1 });
+  
+      res.render('Coupon', { coupons: updatedCoupons });
     } catch (err) {
       console.log(err);
       res.status(500).send('Server Error');
     }
   };
-
-
-
 
 
  //create Coupon
